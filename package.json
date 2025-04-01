@@ -1,4 +1,8 @@
 {
+  "browser": {
+    "fs": false
+  },
+  "homepage": "https://kanpurin.github.io/learning-app/",
   "name": "learning-app",
   "version": "0.1.0",
   "private": true,
