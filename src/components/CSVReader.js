@@ -29,19 +29,18 @@ const CSVReader = ({ onDataLoad }) => {
         row['選択肢4'] || '',
         row['選択肢5'] || '',
       ].filter((opt) => opt),
-      answer: row['正解'] ? row['正解'].split(',').map((n) => parseInt(n, 10)) : [],
+      answer: row['正解'].split(',').map((n) => parseInt(n, 10)),
       explanation: row['解説'],
-      date: row['出題日時'],
-      attempts: parseInt(row['出題回数'], 10) || 0,
-      correctCount: parseInt(row['正解回数'], 10) || 0,
-      correctRate: parseFloat(row['正解率']) || 0,
-      strength: parseInt(row['記憶強度'], 10) || 0,
-      reviewDate: row['次回復習日'],
-      type: row['問題タイプ'],
+      attempts: parseInt(row['出題回数'], 10),
+      correctCount: parseInt(row['正解回数'], 10),
+      priority: parseFloat(row['優先度']),
+      gap: parseInt(row['経過問題数'], 10),
+      type: row['問題タイプ']
     }));
 
     onDataLoad(newQuestions); // 親コンポーネントにデータを渡す
     setIsLoading(false);  // ローディング終了
+    console.log(newQuestions);
   };
 
   return (

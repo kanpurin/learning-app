@@ -1,27 +1,81 @@
-.App {
-  font-family: Arial, sans-serif;
-  margin: 20px;
-  padding: 0;
-  background-color: #f4f4f4;
+/* App.css */
+.app-container {
+  display: flex;
+  flex-direction: column;  /* メインコンテンツを縦方向に並べる */
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
 }
 
-.App h2 {
-  margin-bottom: 20px;
-}
-
-.option-button {
-  display: block;
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #007bff;
+  padding: 10px 20px;
+  color: white;
+  position: fixed;
   width: 100%;
-  padding: 10px;
-  margin-bottom: 10px;
+  top: 0;
+  left: 0;
+  z-index: 1000;  /* サイドバーより上に表示されるように */
+}
+
+.header h1 {
+  margin: 0;
+}
+
+.hamburger-icon {
+  font-size: 30px;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: white;
+}
+
+.sidebar {
+  width: 250px;
+  background-color: #f8f9fa;
+  padding: 20px;
+  position: fixed;
+  top: 60px;  /* ヘッダーの下に配置 */
+  left: -250px;  /* 初期状態は画面外に隠れる */
+  bottom: 0;
+  transition: left 0.3s ease-in-out;
+  z-index: 900;
+}
+
+.sidebar.open {
+  left: 0;  /* 開くと画面内に表示 */
+}
+
+.main-content {
+  margin-top: 80px;  /* ヘッダーの下にスペースを作る */
+  margin-left: 0;
+  transition: margin-left 0.3s ease-in-out;
+  padding: 20px;
+  flex-grow: 1;
+}
+
+.sidebar h5 {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+}
+
+.toggle-sidebar-btn {
+  position: absolute;
+  top: 20px;
+  left: 20px;
   background-color: #007bff;
   color: white;
   border: none;
-  border-radius: 5px;
-  font-size: 16px;
+  padding: 10px 15px;
+  font-size: 1rem;
   cursor: pointer;
+  z-index: 1100;
+  border-radius: 50%;
 }
 
-.option-button:hover {
+.toggle-sidebar-btn:hover {
   background-color: #0056b3;
 }

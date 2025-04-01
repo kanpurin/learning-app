@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import AnswerOption from './AnswerOption';
 import AnswerFeedback from './AnswerFeedback';
 import AnswerButtons from './AnswerButtons';
+import NextQuestion from './NextQuestion';
 
-const Option = ({ question, isCorrect, setIsCorrect, setCurrentQuestionIndex, q_length }) => {
+const Option = ({ question, isCorrect, setIsCorrect, setNextQuestionIndex, isAnswered, setIsAnswered }) => {
   const [selectedIndex, setSelectedIndex] = useState(-1);
-  const [isAnswered, setIsAnswered] = useState(false);
 
   const correctIndex = Number(question.answer[0]);
 
@@ -23,11 +23,13 @@ const Option = ({ question, isCorrect, setIsCorrect, setCurrentQuestionIndex, q_
     setSelectedIndex(-1);
     setIsAnswered(false);
     setIsCorrect(false);
-    setCurrentQuestionIndex((prevIndex) => (prevIndex + 1) % q_length);
+    setNextQuestionIndex();
   };
 
   // 回答ボタンの処理
-  const handleAnswer = () => setIsAnswered(true);
+  const handleAnswer = () => {
+    setIsAnswered(true);
+  }
 
   return (
     <div>
@@ -46,23 +48,19 @@ const Option = ({ question, isCorrect, setIsCorrect, setCurrentQuestionIndex, q_
               selectedIndex={selectedIndex}
               isAnswered={isAnswered}
               handleChange={handleChange}
-              isCorrect={isCorrect}
-              correctIndex={correctIndex}
             />
           );
         })}
       </div>
 
       {/* 正誤判定の表示 */}
-      <AnswerFeedback explanation= {question.explanation} isAnswered={isAnswered} isCorrect={isCorrect} />
+      <AnswerFeedback explanation={question.explanation} isAnswered={isAnswered} isCorrect={isCorrect} />
 
       {/* ボタン（回答 & 次の問題） */}
-      <AnswerButtons
-        handleAnswer={handleAnswer}
-        handleNextQuestion={handleNextQuestion}
-        isAnswered={isAnswered}
-        selectedIndex={selectedIndex}
-      />
+      <div className="d-flex justify-content-center gap-3 mt-4">
+        <AnswerButtons handleAnswer={handleAnswer} disabled={isAnswered || selectedIndex === -1} />
+        <NextQuestion onNext={handleNextQuestion} disabled={!isAnswered} />
+      </div>
     </div>
   );
 };
