@@ -9,11 +9,6 @@ const OrderingQuestion = ({ question, isCorrect, setIsCorrect, setNextQuestionIn
 
   const correctOrder = question.answer;
 
-  const checkAnswer = () => {
-    setIsAnswered(true);
-    setIsCorrect(JSON.stringify(selectedOptions) === JSON.stringify(correctOrder));
-  };
-
   const handleSelect = (index) => {
     if (selectedOptions.includes(index)) {
       setSelectedOptions(selectedOptions.filter((item) => item !== index));
@@ -27,6 +22,11 @@ const OrderingQuestion = ({ question, isCorrect, setIsCorrect, setNextQuestionIn
     setIsAnswered(false);
     setIsCorrect(false);
     setNextQuestionIndex();
+  };
+
+  const handleAnswer = () => {
+    setIsAnswered(true);
+    setIsCorrect(JSON.stringify(selectedOptions) === JSON.stringify(correctOrder));
   };
 
   return (
@@ -53,7 +53,7 @@ const OrderingQuestion = ({ question, isCorrect, setIsCorrect, setNextQuestionIn
 
       {/* ボタン（回答 & 次の問題） */}
       <div className="d-flex justify-content-center gap-3 mt-4">
-        <AnswerButton handleAnswer={checkAnswer} disabled={isAnswered || selectedOptions.length === 0} />
+        <AnswerButton handleAnswer={handleAnswer} disabled={isAnswered || selectedOptions.length === 0} />
         <NextQuestionButton onNext={handleNextQuestion} disabled={!isAnswered} />
       </div>
     </div>
