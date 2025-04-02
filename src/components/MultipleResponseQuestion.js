@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import AnswerSort from './AnswerSort';
+import AnswerMRQ from './AnswerMRQ';
 import AnswerFeedback from './AnswerFeedback';
-import AnswerButtons from './AnswerButtons';
-import NextQuestion from './NextQuestion';
+import AnswerButton from './AnswerButton';
+import NextQuestionButton from './NextQuestionButton';
 
-const Sort = ({ question, isCorrect, setIsCorrect, setNextQuestionIndex, isAnswered, setIsAnswered }) => {
+const MultipleResponseQuestion = ({ question, isCorrect, setIsCorrect, setNextQuestionIndex, isAnswered, setIsAnswered }) => {
   const [selectedOptions, setSelectedOptions] = useState([]);
 
   const correctOrder = question.answer;
@@ -37,7 +37,8 @@ const Sort = ({ question, isCorrect, setIsCorrect, setNextQuestionIndex, isAnswe
       {/* 選択肢 */}
       <div className="list-group">
         {question.options.map((option, index) => (
-          <AnswerSort
+          <AnswerMRQ
+            key={index}
 						option={option}
 						index={index}
 						selectedOptions={selectedOptions}
@@ -52,11 +53,11 @@ const Sort = ({ question, isCorrect, setIsCorrect, setNextQuestionIndex, isAnswe
 
       {/* ボタン（回答 & 次の問題） */}
       <div className="d-flex justify-content-center gap-3 mt-4">
-        <AnswerButtons handleAnswer={checkAnswer} disabled={isAnswered || selectedOptions.length === 0} />
-        <NextQuestion onNext={handleNextQuestion} disabled={!isAnswered} />
+        <AnswerButton handleAnswer={checkAnswer} disabled={isAnswered || selectedOptions.length === 0} />
+        <NextQuestionButton onNext={handleNextQuestion} disabled={!isAnswered} />
       </div>
     </div>
   );
 };
 
-export default Sort;
+export default MultipleResponseQuestion;

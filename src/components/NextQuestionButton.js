@@ -1,6 +1,6 @@
 import React from 'react';
 
-const NextQuestion = ({ onNext, disabled }) => {
+const NextQuestionButton = ({ onNext, disabled }) => {
   return (
     <button 
       onClick={onNext} 
@@ -12,4 +12,4 @@ const NextQuestion = ({ onNext, disabled }) => {
   );
 };
 
-export default NextQuestion;
+export default NextQuestionButton;

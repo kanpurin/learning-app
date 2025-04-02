@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import AnswerOption from './AnswerOption';
+import AnswerMCQ from './AnswerMCQ';
 import AnswerFeedback from './AnswerFeedback';
-import AnswerButtons from './AnswerButtons';
-import NextQuestion from './NextQuestion';
+import AnswerButton from './AnswerButton';
+import NextQuestionButton from './NextQuestionButton';
 
-const Option = ({ question, isCorrect, setIsCorrect, setNextQuestionIndex, isAnswered, setIsAnswered }) => {
+const MultipleChoiceQuestion = ({ question, isCorrect, setIsCorrect, setNextQuestionIndex, isAnswered, setIsAnswered }) => {
   const [selectedIndex, setSelectedIndex] = useState(-1);
 
   const correctIndex = Number(question.answer[0]);
@@ -41,7 +41,7 @@ const Option = ({ question, isCorrect, setIsCorrect, setNextQuestionIndex, isAns
         {question.options.map((option, index) => {
           const optionIndex = index + 1;
           return (
-            <AnswerOption
+            <AnswerMCQ
               key={index}
               option={option}
               optionIndex={optionIndex}
@@ -58,11 +58,11 @@ const Option = ({ question, isCorrect, setIsCorrect, setNextQuestionIndex, isAns
 
       {/* ボタン（回答 & 次の問題） */}
       <div className="d-flex justify-content-center gap-3 mt-4">
-        <AnswerButtons handleAnswer={handleAnswer} disabled={isAnswered || selectedIndex === -1} />
-        <NextQuestion onNext={handleNextQuestion} disabled={!isAnswered} />
+        <AnswerButton handleAnswer={handleAnswer} disabled={isAnswered || selectedIndex === -1} />
+        <NextQuestionButton onNext={handleNextQuestion} disabled={!isAnswered} />
       </div>
     </div>
   );
 };
 
-export default Option;
+export default MultipleChoiceQuestion;

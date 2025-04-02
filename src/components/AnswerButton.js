@@ -1,6 +1,6 @@
 import React from 'react';
 
-const AnswerButtons = ({ handleAnswer, disabled }) => {
+const AnswerButton = ({ handleAnswer, disabled }) => {
   return (
     <button
       onClick={handleAnswer}
@@ -12,4 +12,4 @@ const AnswerButtons = ({ handleAnswer, disabled }) => {
   );
 };
 
-export default AnswerButtons;
+export default AnswerButton;

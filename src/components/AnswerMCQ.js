@@ -1,6 +1,6 @@
 import React from 'react';
 
-const AnswerOption = ({ option, optionIndex, selectedIndex, isAnswered, handleChange}) => {
+const AnswerMCQ = ({ option, optionIndex, selectedIndex, isAnswered, handleChange}) => {
   return (
     <label className='list-group-item list-group-item-action py-2 d-flex align-items-center'>
       <input
@@ -16,4 +16,4 @@ const AnswerOption = ({ option, optionIndex, selectedIndex, isAnswered, handleCh
   );
 };
 
-export default AnswerOption;
+export default AnswerMCQ;
