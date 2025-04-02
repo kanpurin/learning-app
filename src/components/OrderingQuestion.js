@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import AnswerMRQ from './AnswerMRQ';
+import AnswerOrder from './AnswerOrder';
 import AnswerFeedback from './AnswerFeedback';
 import AnswerButton from './AnswerButton';
 import NextQuestionButton from './NextQuestionButton';
 
-const MultipleResponseQuestion = ({ question, isCorrect, setIsCorrect, setNextQuestionIndex, isAnswered, setIsAnswered }) => {
+const OrderingQuestion = ({ question, isCorrect, setIsCorrect, setNextQuestionIndex, isAnswered, setIsAnswered }) => {
   const [selectedOptions, setSelectedOptions] = useState([]);
 
   const correctOrder = question.answer;
@@ -37,7 +37,7 @@ const MultipleResponseQuestion = ({ question, isCorrect, setIsCorrect, setNextQu
       {/* 選択肢 */}
       <div className="list-group">
         {question.options.map((option, index) => (
-          <AnswerMRQ
+          <AnswerOrder
             key={index}
 						option={option}
 						index={index}
@@ -60,4 +60,4 @@ const MultipleResponseQuestion = ({ question, isCorrect, setIsCorrect, setNextQu
   );
 };
 
-export default MultipleResponseQuestion;
+export default OrderingQuestion;

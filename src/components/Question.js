@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import MultipleChoiceQuestion from './MultipleChoiceQuestion';
-import MultipleResponseQuestion from './MultipleResponseQuestion';
+import OrderingQuestion from './OrderingQuestion';
 
 const Question = ({ questions, setQuestions }) => {
 	const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -73,7 +73,7 @@ const Question = ({ questions, setQuestions }) => {
 
 	const Qtype = {
 		mcq: MultipleChoiceQuestion,
-		mrq: MultipleResponseQuestion
+		order: OrderingQuestion
 	}[currentQuestion.type] || MultipleChoiceQuestion;
 
   return (
