@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import AnswerOrder from './AnswerOrder';
-import AnswerFeedback from './AnswerFeedback';
-import AnswerButton from './AnswerButton';
-import NextQuestionButton from './NextQuestionButton';
+import AnswerFeedback from '../AnswerFeedback';
+import AnswerButton from '../AnswerButton';
+import NextQuestionButton from '../NextQuestionButton';
 
 const OrderingQuestion = ({ question, isCorrect, setIsCorrect, setNextQuestionIndex, isAnswered, setIsAnswered }) => {
   const [selectedOptions, setSelectedOptions] = useState([]);

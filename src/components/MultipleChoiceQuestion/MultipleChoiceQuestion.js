@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import AnswerMCQ from './AnswerMCQ';
-import AnswerFeedback from './AnswerFeedback';
-import AnswerButton from './AnswerButton';
-import NextQuestionButton from './NextQuestionButton';
+import AnswerFeedback from '../AnswerFeedback';
+import AnswerButton from '../AnswerButton';
+import NextQuestionButton from '../NextQuestionButton';
 
 const MultipleChoiceQuestion = ({ question, isCorrect, setIsCorrect, setNextQuestionIndex, isAnswered, setIsAnswered }) => {
   const [selectedIndex, setSelectedIndex] = useState(-1);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import MultipleChoiceQuestion from './MultipleChoiceQuestion';
-import OrderingQuestion from './OrderingQuestion';
+import MultipleChoiceQuestion from './MultipleChoiceQuestion/MultipleChoiceQuestion';
+import OrderingQuestion from './OrderingQuestion/OrderingQuestion';
 
 const Question = ({ questions, setQuestions }) => {
 	const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
