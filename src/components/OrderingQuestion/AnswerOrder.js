@@ -1,4 +1,5 @@
 import React from 'react';
+import MarkdownArea from '../MarkdownArea';
 
 const AnswerMRQ = ({ option, index, selectedOptions, handleSelect, isAnswered }) => {
   const selectedIndex = selectedOptions.indexOf(index + 1) + 1;
@@ -17,7 +18,7 @@ const AnswerMRQ = ({ option, index, selectedOptions, handleSelect, isAnswered })
         disabled={isAnswered}
         onChange={() => handleSelect(index + 1)}
       />
-      {option}
+      <MarkdownArea text={option} margin="0em"/>
     </label>
   );
 };

@@ -3,6 +3,7 @@ import AnswerOrder from './AnswerOrder';
 import AnswerFeedback from '../AnswerFeedback';
 import AnswerButton from '../AnswerButton';
 import NextQuestionButton from '../NextQuestionButton';
+import MarkdownArea from '../MarkdownArea';
 
 const OrderingQuestion = ({ question, isCorrect, setIsCorrect, setNextQuestionIndex, isAnswered, setIsAnswered }) => {
   const [selectedOptions, setSelectedOptions] = useState([]);
@@ -32,7 +33,7 @@ const OrderingQuestion = ({ question, isCorrect, setIsCorrect, setNextQuestionIn
   return (
     <div>
       {/* 問題文 */}
-      <h5 className="mb-4 text-center">{question.problem}</h5>
+      <MarkdownArea text={question.problem}/>
       
       {/* 選択肢 */}
       <div className="list-group">

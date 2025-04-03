@@ -4,7 +4,7 @@ import MarkdownArea from './MarkdownArea';
 const AnswerFeedback = ({ explanation, isAnswered, isCorrect }) => {
   return (
     isAnswered && (
-      <div className={`alert mt-3 text-center ${isCorrect ? 'alert-success' : 'alert-danger'}`} role="alert">
+      <div className={`alert mt-3 ${isCorrect ? 'alert-success' : 'alert-danger'}`} role="alert">
         <MarkdownArea text={explanation} />
       </div>
     )

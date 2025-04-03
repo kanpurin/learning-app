@@ -3,6 +3,7 @@ import AnswerMRQ from './AnswerMRQ';
 import AnswerFeedback from '../AnswerFeedback';
 import AnswerButton from '../AnswerButton';
 import NextQuestionButton from '../NextQuestionButton';
+import MarkdownArea from '../MarkdownArea';
 
 const MultipleResponseQuestion = ({ question, isCorrect, setIsCorrect, setNextQuestionIndex, isAnswered, setIsAnswered }) => {
   const [selectedIndices, setSelectedIndices] = useState([]);
@@ -43,7 +44,7 @@ const MultipleResponseQuestion = ({ question, isCorrect, setIsCorrect, setNextQu
   return (
     <div>
       {/* 問題文 */}
-      <h5 className="mb-4 text-center">{question.problem}</h5>
+      <MarkdownArea text={question.problem}/>
 
       {/* 選択肢 */}
       <div className="list-group">
