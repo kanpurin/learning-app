@@ -37,7 +37,7 @@ const App = () => {
         )}
       </div>
 
-      <div className="main-content">
+      <div className="main-content" style={{ overflowY: 'auto' }}>
         {questions.length > 0 && (
           <Question questions={questions} setQuestions={setQuestions} />
         )}
