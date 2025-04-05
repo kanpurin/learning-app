@@ -7,6 +7,7 @@ const AnswerMRQ = ({ option, optionIndex, selectedIndices, isAnswered, handleCha
       <input
         className="form-check-input me-2"
         type="checkbox"
+        value={optionIndex}
         checked={selectedIndices.includes(optionIndex)}
         disabled={isAnswered}
         onChange={handleChange}

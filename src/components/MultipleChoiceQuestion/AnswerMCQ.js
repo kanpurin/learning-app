@@ -7,6 +7,7 @@ const AnswerMCQ = ({ option, optionIndex, selectedIndex, isAnswered, handleChang
       <input
         className="form-check-input me-2"
         type="radio"
+        value={optionIndex}
         checked={selectedIndex === optionIndex}
         disabled={isAnswered}
         onChange={handleChange}
