@@ -37,16 +37,20 @@ const OrderingQuestion = ({ question, isCorrect, setIsCorrect, setNextQuestionIn
       
       {/* 選択肢 */}
       <div className="list-group">
-        {question.options.map((option, index) => (
-          <AnswerOrder
-            key={index}
-						option={option}
-						index={index}
-						selectedOptions={selectedOptions}
-						handleSelect={handleSelect}
-            isAnswered={isAnswered}
-					/>
-        ))}
+        {question.options.map((option, index) => {
+          const optionIndex = index + 1;
+          const selectedIndex = selectedOptions.indexOf(optionIndex) + 1;
+          return (
+            <AnswerOrder
+              key={index}
+              option={option}
+              optionIndex={optionIndex}
+              selectedIndex={selectedIndex}
+              onChange={() => handleSelect(optionIndex)}
+              disabled={isAnswered}
+            />
+          )
+      })}
       </div>
       
       {/* 正誤判定の表示 */}

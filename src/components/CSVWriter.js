@@ -1,8 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Papa from 'papaparse';
 
 // 学習履歴CSVを保存するコンポーネント
-const CSVWriter = ({ questions }) => {
+const CSVWriter = ({ questions, fileName, setFileName }) => {
+  // ファイル名変更時のハンドラ
+  const handleFileNameChange = (event) => {
+    setFileName(event.target.value);
+  };
+
   const handleDownload = () => {
     // questionsのデータをCSV形式に変換
     const dataToExport = questions.map((question) => ({
@@ -25,14 +30,29 @@ const CSVWriter = ({ questions }) => {
     const blob = new Blob([csv], { type: 'text/csv' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = 'questions_data.csv';  // ダウンロードするファイル名
+    link.download = `${fileName}.csv`;  // ユーザーが指定したファイル名でダウンロード
     link.click();  // ダウンロードをトリガー
   };
 
   return (
-    <button className="btn btn-success" onClick={handleDownload}>
-      学習履歴CSVを保存
-    </button>
+    <div>
+      {/* ファイル名入力フィールド */}
+      <div className="mb-3">
+        <label htmlFor="file-name" className="form-label">ファイル名</label>
+        <input
+          type="text"
+          id="file-name"
+          className="form-control"
+          value={fileName}
+          onChange={handleFileNameChange}
+          placeholder="ファイル名を入力"
+        />
+      </div>
+
+      <button className="btn btn-success" onClick={handleDownload}>
+        学習履歴CSVを保存
+      </button>
+    </div>
   );
 };
 

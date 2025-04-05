@@ -46,9 +46,9 @@ const MultipleChoiceQuestion = ({ question, isCorrect, setIsCorrect, setNextQues
               key={index}
               option={option}
               optionIndex={optionIndex}
-              selectedIndex={selectedIndex}
-              isAnswered={isAnswered}
-              handleChange={handleChange}
+              checked={selectedIndex === optionIndex}
+              onChange={handleChange}
+              disabled={isAnswered}
             />
           );
         })}

@@ -1,23 +1,30 @@
 import React, { useState } from 'react';
 import Papa from 'papaparse';
 
-const CSVReader = ({ onDataLoad }) => {
+const CSVReader = ({ onDataLoad, questions }) => {
   const [isLoading, setIsLoading] = useState(false);  // ローディング状態
 
   const handleFileUpload = (event) => {
+    if (questions.length > 0) {
+      // 警告を表示
+      if (!window.confirm('既存の問題が上書きされます。続行しますか？')) {
+        return;  // ユーザーがキャンセルした場合、処理を中止
+      }
+    }
     const file = event.target.files[0];
     if (file && file.name.endsWith('.csv')) {
       setIsLoading(true);  // 読み込み中フラグ
 
       const reader = new FileReader();
       reader.onload = (e) => {
-        loadCSV(e.target.result);
-      };
+        console.log(file);
+        loadCSV(e.target.result, file.name);
+      };        
       reader.readAsText(file);
     }
   };
 
-  const loadCSV = (csvData) => {
+  const loadCSV = (csvData, fileName) => {
     const parsedData = Papa.parse(csvData, { header: true, skipEmptyLines: true });
 
     const newQuestions = parsedData.data.map((row) => ({
@@ -38,9 +45,8 @@ const CSVReader = ({ onDataLoad }) => {
       type: row['問題タイプ']
     }));
 
-    onDataLoad(newQuestions); // 親コンポーネントにデータを渡す
+    onDataLoad(newQuestions, fileName); // 親コンポーネントにデータを渡す
     setIsLoading(false);  // ローディング終了
-    console.log(newQuestions);
   };
 
   return (

@@ -55,9 +55,9 @@ const MultipleResponseQuestion = ({ question, isCorrect, setIsCorrect, setNextQu
               key={index}
               option={option}
               optionIndex={optionIndex}
-              selectedIndices={selectedIndices}
-              isAnswered={isAnswered}
-              handleChange={handleChange}
+              checked={selectedIndices.includes(optionIndex)}
+              onChange={handleChange}
+              disabled={isAnswered}
             />
           );
         })}

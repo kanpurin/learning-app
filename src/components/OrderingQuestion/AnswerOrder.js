@@ -1,26 +1,31 @@
 import React from 'react';
 import MarkdownArea from '../MarkdownArea';
 
-const AnswerMRQ = ({ option, index, selectedOptions, handleSelect, isAnswered }) => {
-  const selectedIndex = selectedOptions.indexOf(index + 1) + 1;
-
+const AnswerOrder = ({ option, optionIndex, selectedIndex, onChange, disabled, onClick }) => {
   return (
-    <label className="list-group-item d-flex align-items-center">
+    <label 
+      className="list-group-item d-flex align-items-center"
+      onClick={onClick}
+    >
       <span 
         className="me-2 d-inline-block text-center border rounded-circle" 
-        style={{ width: '24px', height: '24px', lineHeight: '24px' }}>
+        style={{ width: '24px', height: '24px', lineHeight: '24px' }}
+        onClick={(e) => e.stopPropagation()}
+      >
         {selectedIndex > 0 ? selectedIndex : ''}
       </span>
       <input
-        type="checkbox"
         className="form-check-input me-2 d-none"
+        type="checkbox"
+        value={optionIndex}
         checked={selectedIndex > 0}
-        disabled={isAnswered}
-        onChange={() => handleSelect(index + 1)}
+        onChange={onChange}
+        onClick={(e) => e.stopPropagation()}
+        disabled={disabled}
       />
       <MarkdownArea text={option} margin="0em"/>
     </label>
   );
 };
 
-export default AnswerMRQ;
+export default AnswerOrder;
