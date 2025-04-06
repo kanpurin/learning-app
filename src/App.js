@@ -67,12 +67,14 @@ const App = () => {
         </div>
 
         {/* コンテンツ表示切替 */}
-        {activeTab === 'quiz' && questions.length > 0 && (
-          <Question questions={questions} setQuestions={setQuestions} />
-        )}
-        {activeTab === 'create' && (
-          <CreateQuestion questions={questions} setQuestions={setQuestions}/>
-        )}
+        <div style={{ display: activeTab === 'quiz' ? 'block' : 'none' }}>
+          {questions.length > 0 && (
+            <Question questions={questions} setQuestions={setQuestions} />
+          )}
+        </div>
+        <div style={{ display: activeTab === 'create' ? 'block' : 'none' }}>
+          <CreateQuestion questions={questions} setQuestions={setQuestions} />
+        </div>
       </div>
     </div>
   );

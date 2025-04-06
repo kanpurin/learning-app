@@ -7,6 +7,7 @@ const Question = ({ questions, setQuestions }) => {
 	const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 	const [isCorrect, setIsCorrect] = useState(false);
 	const [isAnswered, setIsAnswered] = useState(false);
+	const [quizStarted, setQuizStarted] = useState(false);
 
 	const currentQuestion = questions[currentQuestionIndex];
 
@@ -41,6 +42,11 @@ const Question = ({ questions, setQuestions }) => {
 		const nextIndex = selectNextQuestionIndex();
 		setCurrentQuestionIndex(nextIndex);
 	}
+
+  const startQuiz = () => {
+    setQuizStarted(true);
+		setNextQuestionIndex();
+  };
 
 	// isAnswered が更新されたタイミングで学習履歴を更新
 	useEffect(() => {
@@ -79,18 +85,29 @@ const Question = ({ questions, setQuestions }) => {
 	}[currentQuestion.type] || MultipleChoiceQuestion;
 
   return (
-    <div className="container mt-4">
-      <div className="card p-4 shadow-sm">
-				<Qtype
-					question={currentQuestion}
-					isCorrect={isCorrect}
-					setIsCorrect={setIsCorrect}
-					setNextQuestionIndex={setNextQuestionIndex}
-					isAnswered={isAnswered}
-					setIsAnswered={setIsAnswered}
-				/>
-      </div>
-    </div>
+		<div>
+			{!quizStarted && (
+				<div className="text-center mt-4">
+					<button className="btn btn-primary" onClick={startQuiz}>
+						クイズを開始
+					</button>
+				</div>
+			)}
+			{quizStarted && (
+				<div className="container mt-4">
+					<div className="card p-4 shadow-sm">
+						<Qtype
+							question={currentQuestion}
+							isCorrect={isCorrect}
+							setIsCorrect={setIsCorrect}
+							setNextQuestionIndex={setNextQuestionIndex}
+							isAnswered={isAnswered}
+							setIsAnswered={setIsAnswered}
+						/>
+					</div>
+				</div>
+			)}
+		</div>
   );
 };
 
