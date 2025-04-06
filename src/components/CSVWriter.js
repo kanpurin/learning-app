@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import Papa from 'papaparse';
 
 // 学習履歴CSVを保存するコンポーネント
