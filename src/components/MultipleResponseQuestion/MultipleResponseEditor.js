@@ -50,6 +50,20 @@ const MultipleResponseEditor = ({ question, setQuestion }) => {
 
   return (
     <div>
+      <div className="mb-3 border-bottom pb-2">
+        <input
+          type="text"
+          className="form-control"
+          style={{ borderRadius: '0', boxShadow: 'none' }}
+          placeholder="問題のタイトル（summary）"
+          value={updatedQuestion.summary}
+          onChange={(e) => {
+            const newSummary = e.target.value;
+            setUpdatedQuestion(prev => ({ ...prev, summary: newSummary }));
+          }}
+        />
+      </div>
+
       <div onClick={() => {
         setTempProblem(updatedQuestion.problem);
         setShowProblemModal(true);

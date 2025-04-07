@@ -15,7 +15,7 @@ const EditQuestion = ({ questions, setQuestions }) => {
   };
 
   const deleteQuestion = (index) => {
-    const confirmDelete = window.confirm(`質問 ${index + 1} を削除してもよろしいですか？`);
+    const confirmDelete = window.confirm(`問題 ${index + 1} を削除してもよろしいですか？`);
     if (!confirmDelete) return;
 
     setQuestions(prev => {
@@ -56,25 +56,9 @@ const EditQuestion = ({ questions, setQuestions }) => {
               <button
                 className={`accordion-button ${currentQuestionIndex === index ? '' : 'collapsed'}`}
                 type="button"
-                onClick={() => setCurrentQuestionIndex(index)}
+                onClick={() => setCurrentQuestionIndex(prev => prev === index ? null : index)}
               >
-                <input
-                  type="text"
-                  className="form-control border-0 bg-transparent p-0 m-0"
-                  value={q.summary || `質問 ${index + 1}（${q.type}）`}
-                  onClick={(e) => e.stopPropagation()} // アコーディオンが開閉しないように
-                  onChange={(e) => {
-                    const newSummary = e.target.value;
-                    setQuestions(prev => {
-                      const updated = [...prev];
-                      updated[index] = {
-                        ...updated[index],
-                        summary: newSummary
-                      };
-                      return updated;
-                    });
-                  }}
-                />
+                {q.summary || `問題 ${index + 1}`}
               </button>
             </h2>
             <div
