@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import Question from './components/Question';
 import CreateQuestion from './components/CreateQuestion';
-import CSVReader from './components/CSVReader';
-import CSVWriter from './components/CSVWriter';
+import JSONReader from './components/JSONReader';
+import JSONWriter from './components/JSONWriter';
 import './App.css';
 
 const App = () => {
@@ -32,11 +32,11 @@ const App = () => {
 
       <div className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
         <h5>CSVファイルのアップロード</h5>
-        <CSVReader onDataLoad={handleDataLoad} questions={questions}/>
+        <JSONReader onDataLoad={handleDataLoad} questions={questions}/>
 
         {questions.length > 0 && (
           <div className="mt-4">
-            <CSVWriter questions={questions} fileName={fileName} setFileName={setFileName} />
+            <JSONWriter questions={questions} fileName={fileName} setFileName={setFileName} />
           </div>
         )}
       </div>
