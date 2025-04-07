@@ -3,7 +3,7 @@ import MarkdownArea from '../MarkdownArea';
 import TextEditModal from '../TextEditModal';
 import AnswerOrder from './AnswerOrder';
 
-const MultipleOrderEditor = ({ questions, setQuestions }) => {
+const MultipleOrderCreator = ({ questions, setQuestions }) => {
   const [question, setQuestion] = useState({
     problem: '### 問題文',
     options: ['', '', '', '', ''],
@@ -175,4 +175,4 @@ const MultipleOrderEditor = ({ questions, setQuestions }) => {
   );
 };
 
-export default MultipleOrderEditor;
+export default MultipleOrderCreator;

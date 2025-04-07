@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import MarkdownArea from '../MarkdownArea';
 import TextEditModal from '../TextEditModal';
-import AnswerMRQ from './AnswerMRQ';
+import AnswerMCQ from './AnswerMCQ';
 
-const MultipleResponseEditor = ({ questions, setQuestions }) => {
+const MultipleChoiceCreator = ({ questions, setQuestions }) => {
   const [question, setQuestion] = useState({
     problem: '### 問題文',
     options: ['', ''],
@@ -17,7 +17,7 @@ const MultipleResponseEditor = ({ questions, setQuestions }) => {
   const [showOptionModal, setShowOptionModal] = useState(false);
   const [editingOptionIndex, setEditingOptionIndex] = useState(null);
   const [tempOption, setTempOption] = useState('');
-  
+
   const [showExplanationModal, setShowExplanationModal] = useState(false);
   const [tempExplanation, setTempExplanation] = useState('');
 
@@ -48,7 +48,7 @@ const MultipleResponseEditor = ({ questions, setQuestions }) => {
     const newQuestion = {
       ...question,
       options: filledOptions,
-      type: 'mrq',
+      type: 'mcq',
       attempts: 0,
       correctCount: 0,
       priority: 1.0,
@@ -76,21 +76,12 @@ const MultipleResponseEditor = ({ questions, setQuestions }) => {
         {question.options.map((option, index) => {
           const optionIndex = index + 1;
           return (
-            <AnswerMRQ
+            <AnswerMCQ
               key={index}
               option={option || `選択肢${optionIndex}`}
               optionIndex={optionIndex}
               checked={question.answer.includes(optionIndex)}
-              onChange={(e) => {
-                const selected = Number(e.target.value);
-                setQuestion((prev) => {
-                  if (prev.answer.includes(selected)) {
-                    return {...prev, answer: prev.answer.filter(index => index !== selected)};
-                  } else {
-                    return {...prev, answer: [...prev.answer, optionIndex]};
-                  }
-                })
-              }}
+              onChange={() => setQuestion({ ...question, answer: [optionIndex] })}
               onClick={() => {
                 setEditingOptionIndex(index);
                 setTempOption(option);
@@ -107,6 +98,7 @@ const MultipleResponseEditor = ({ questions, setQuestions }) => {
             />
           )
         })}
+
         <button
           className="list-group-item list-group-item-action text-center text-primary"
           onClick={addOption}
@@ -115,9 +107,9 @@ const MultipleResponseEditor = ({ questions, setQuestions }) => {
         </button>
       </div>
 
-      <div 
-        className={`alert mt-3 alert-success`} 
-        role="alert" 
+      <div
+        className="alert mt-3 alert-success"
+        role="alert"
         onClick={() => {
           setTempExplanation(question.explanation);
           setShowExplanationModal(true);
@@ -171,4 +163,4 @@ const MultipleResponseEditor = ({ questions, setQuestions }) => {
   );
 };
 
-export default MultipleResponseEditor;
+export default MultipleChoiceCreator;

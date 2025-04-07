@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
-import MultipleChoiceEditor from './MultipleChoiceQuestion/MultipleChoiceEditor';
-import MultipleResponseEditor from './MultipleResponseQuestion/MultipleResponseEditor';
-import OrderingEditor from './OrderingQuestion/OrderingEditor';
+import MultipleChoiceCreator from './MultipleChoiceQuestion/MultipleChoiceCreator';
+import MultipleResponseCreator from './MultipleResponseQuestion/MultipleResponseCreator';
+import OrderingCreator from './OrderingQuestion/OrderingCreator';
 
 const CreateQuestion = ({ questions, setQuestions }) => {
   const [questionType, setQuestionType] = useState('mcq');
 
-  const QEditor = {
-    mcq: MultipleChoiceEditor,
-    mrq: MultipleResponseEditor,
-    order: OrderingEditor
-  }[questionType] || MultipleChoiceEditor;
+  const QCreator = {
+    mcq: MultipleChoiceCreator,
+    mrq: MultipleResponseCreator,
+    order: OrderingCreator
+  }[questionType] || MultipleChoiceCreator;
 
   return (
     <div className="container mt-4">
@@ -26,7 +26,7 @@ const CreateQuestion = ({ questions, setQuestions }) => {
         </select>
       </div>
       <div className="card p-4 shadow-sm">
-        <QEditor questions={questions} setQuestions={setQuestions} />
+        <QCreator questions={questions} setQuestions={setQuestions} />
       </div>
       {/* {questions.length > 0 && (
           <div className="mt-4">
