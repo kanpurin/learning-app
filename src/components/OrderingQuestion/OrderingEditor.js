@@ -3,13 +3,8 @@ import MarkdownArea from '../MarkdownArea';
 import TextEditModal from '../TextEditModal';
 import AnswerOrder from './AnswerOrder';
 
-const MultipleOrderCreator = ({ questions, setQuestions }) => {
-  const [question, setQuestion] = useState({
-    problem: '### 問題文',
-    options: ['', ''],
-    answer: [],
-    explanation: '解説文'
-  });
+const MultipleOrderCreator = ({ question, setQuestion }) => {
+  const [updatedQuestion, setUpdatedQuestion] = useState(question);
 
   const [showProblemModal, setShowProblemModal] = useState(false);
   const [tempProblem, setTempProblem] = useState('');
@@ -22,9 +17,9 @@ const MultipleOrderCreator = ({ questions, setQuestions }) => {
   const [tempExplanation, setTempExplanation] = useState('');
 
   const handleSave = () => {
-    const filledOptions = question.options.filter((opt) => opt.trim() !== '');
+    const filledOptions = updatedQuestion.options.filter((opt) => opt.trim() !== '');
 
-    if (!question.problem.trim()) {
+    if (!updatedQuestion.problem.trim()) {
       alert('問題文を入力してください');
       return;
     }
@@ -32,50 +27,40 @@ const MultipleOrderCreator = ({ questions, setQuestions }) => {
       alert('2つ以上の選択肢を入力してください');
       return;
     }
-    if (question.answer.length === 0) {
+    if (updatedQuestion.answer.length === 0) {
       alert('正解の選択肢を選んでください');
       return;
     }
-    if (!question.explanation.trim()) {
+    if (!updatedQuestion.explanation.trim()) {
       alert('解説文を入力してください');
       return;
     }
-    if (question.options.some((option) => option.trim() === '')) {
+    if (updatedQuestion.options.some((option) => option.trim() === '')) {
       alert('選択肢に空欄が含まれています。すべての選択肢を入力してください');
       return;
     }
 
-    const newQuestion = {
-      ...question,
-      options: filledOptions,
-      type: 'order',
-      attempts: 0,
-      correctCount: 0,
-      priority: 1.0,
-      gap: 100
-    };
-
-    setQuestions([...questions, newQuestion]);
-    alert('問題を保存しました');
+    setQuestion(updatedQuestion);
+    alert('問題を更新しました');
   };
 
   const addOption = () => {
-    setQuestion({ ...question, options: [...question.options, ''] });
+    setUpdatedQuestion({ ...updatedQuestion, options: [...updatedQuestion.options, ''] });
   };
 
   return (
     <div>
       <div onClick={() => {
-        setTempProblem(question.problem);
+        setTempProblem(updatedQuestion.problem);
         setShowProblemModal(true);
       }}>
-        <MarkdownArea text={question.problem || '### 問題文'} />
+        <MarkdownArea text={updatedQuestion.problem || '### 問題文'} />
       </div>
 
       <div className="list-group">
-        {question.options.map((option, index) => {
+        {updatedQuestion.options.map((option, index) => {
           const optionIndex = index + 1;
-          const selectedIndex = question.answer.indexOf(optionIndex) + 1;
+          const selectedIndex = updatedQuestion.answer.indexOf(optionIndex) + 1;
 
           return (
             <AnswerOrder
@@ -100,11 +85,11 @@ const MultipleOrderCreator = ({ questions, setQuestions }) => {
                 setShowOptionModal(true);
               }}
               onDelete={(deleteIndex) => {
-                const newOptions = question.options.filter((_, i) => i !== deleteIndex);
-                const newAnswer = question.answer
+                const newOptions = updatedQuestion.options.filter((_, i) => i !== deleteIndex);
+                const newAnswer = updatedQuestion.answer
                   .filter((ans) => ans !== deleteIndex + 1)
                   .map((ans) => (ans > deleteIndex + 1 ? ans - 1 : ans));
-                setQuestion({ ...question, options: newOptions, answer: newAnswer });
+                setQuestion({ ...updatedQuestion, options: newOptions, answer: newAnswer });
               }}
               disabled={!option.trim()}
             />
@@ -123,11 +108,11 @@ const MultipleOrderCreator = ({ questions, setQuestions }) => {
         className={`alert mt-3 alert-success`} 
         role="alert" 
         onClick={() => {
-          setTempExplanation(question.explanation);
+          setTempExplanation(updatedQuestion.explanation);
           setShowExplanationModal(true);
         }}
       >
-        <MarkdownArea text={question.explanation || '解説文'} />
+        <MarkdownArea text={updatedQuestion.explanation || '解説文'} />
       </div>
 
       <TextEditModal
@@ -137,7 +122,7 @@ const MultipleOrderCreator = ({ questions, setQuestions }) => {
         onChange={setTempProblem}
         onClose={() => setShowProblemModal(false)}
         onSave={() => {
-          setQuestion({ ...question, problem: tempProblem });
+          setQuestion({ ...updatedQuestion, problem: tempProblem });
           setShowProblemModal(false);
         }}
       />
@@ -149,9 +134,9 @@ const MultipleOrderCreator = ({ questions, setQuestions }) => {
         onChange={setTempOption}
         onClose={() => setShowOptionModal(false)}
         onSave={() => {
-          const newOptions = [...question.options];
+          const newOptions = [...updatedQuestion.options];
           newOptions[editingOptionIndex] = tempOption;
-          setQuestion({ ...question, options: newOptions });
+          setQuestion({ ...updatedQuestion, options: newOptions });
           setShowOptionModal(false);
         }}
       />
@@ -163,7 +148,7 @@ const MultipleOrderCreator = ({ questions, setQuestions }) => {
         onChange={setTempExplanation}
         onClose={() => setShowExplanationModal(false)}
         onSave={() => {
-          setQuestion({ ...question, explanation: tempExplanation });
+          setQuestion({ ...updatedQuestion, explanation: tempExplanation });
           setShowExplanationModal(false);
         }}
       />
