@@ -1,10 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MarkdownArea from '../MarkdownArea';
 import TextEditModal from '../TextEditModal';
 import AnswerMCQ from './AnswerMCQ';
 
-const MultipleChoiceEditor = ({ question, setQuestion }) => {
+const MultipleChoiceEditor = ({ question, setQuestion, setIsSaved }) => {
   const [updatedQuestion, setUpdatedQuestion] = useState(question);
+
+  useEffect(() => {
+    setIsSaved(JSON.stringify(updatedQuestion) === JSON.stringify(question));
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [updatedQuestion]);
 
   const [showProblemModal, setShowProblemModal] = useState(false);
   const [tempProblem, setTempProblem] = useState('');
@@ -41,6 +46,7 @@ const MultipleChoiceEditor = ({ question, setQuestion }) => {
     }
 
     setQuestion(updatedQuestion);
+    setIsSaved(true);
     alert('問題を更新しました');
   };
 

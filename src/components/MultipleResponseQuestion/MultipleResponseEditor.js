@@ -1,10 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MarkdownArea from '../MarkdownArea';
 import TextEditModal from '../TextEditModal';
 import AnswerMRQ from './AnswerMRQ';
 
-const MultipleResponseEditor = ({ question, setQuestion }) => {
+const MultipleResponseEditor = ({ question, setQuestion, setIsSaved }) => {
   const [updatedQuestion, setUpdatedQuestion] = useState(question);
+  
+  useEffect(() => {
+    setIsSaved(JSON.stringify(updatedQuestion) === JSON.stringify(question));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [updatedQuestion]);
 
   const [showProblemModal, setShowProblemModal] = useState(false);
   const [tempProblem, setTempProblem] = useState('');
@@ -41,6 +46,7 @@ const MultipleResponseEditor = ({ question, setQuestion }) => {
     }
 
     setQuestion(updatedQuestion);
+    setIsSaved(true);
     alert('問題を更新しました');
   };
 
@@ -82,7 +88,7 @@ const MultipleResponseEditor = ({ question, setQuestion }) => {
               checked={updatedQuestion.answer.includes(optionIndex)}
               onChange={(e) => {
                 const selected = Number(e.target.value);
-                setQuestion((prev) => {
+                setUpdatedQuestion((prev) => {
                   if (prev.answer.includes(selected)) {
                     return {...prev, answer: prev.answer.filter(index => index !== selected)};
                   } else {
@@ -100,7 +106,7 @@ const MultipleResponseEditor = ({ question, setQuestion }) => {
                 const newAnswer = updatedQuestion.answer
                   .filter((ans) => ans !== deleteIndex + 1)
                   .map((ans) => (ans > deleteIndex + 1 ? ans - 1 : ans));
-                setQuestion({ ...updatedQuestion, options: newOptions, answer: newAnswer });
+                setUpdatedQuestion({ ...updatedQuestion, options: newOptions, answer: newAnswer });
               }}
               disabled={!option.trim()}
             />
@@ -132,7 +138,7 @@ const MultipleResponseEditor = ({ question, setQuestion }) => {
         onChange={setTempProblem}
         onClose={() => setShowProblemModal(false)}
         onSave={() => {
-          setQuestion({ ...updatedQuestion, problem: tempProblem });
+          setUpdatedQuestion({ ...updatedQuestion, problem: tempProblem });
           setShowProblemModal(false);
         }}
       />
@@ -146,7 +152,7 @@ const MultipleResponseEditor = ({ question, setQuestion }) => {
         onSave={() => {
           const newOptions = [...updatedQuestion.options];
           newOptions[editingOptionIndex] = tempOption;
-          setQuestion({ ...updatedQuestion, options: newOptions });
+          setUpdatedQuestion({ ...updatedQuestion, options: newOptions });
           setShowOptionModal(false);
         }}
       />
@@ -158,7 +164,7 @@ const MultipleResponseEditor = ({ question, setQuestion }) => {
         onChange={setTempExplanation}
         onClose={() => setShowExplanationModal(false)}
         onSave={() => {
-          setQuestion({ ...updatedQuestion, explanation: tempExplanation });
+          setUpdatedQuestion({ ...updatedQuestion, explanation: tempExplanation });
           setShowExplanationModal(false);
         }}
       />

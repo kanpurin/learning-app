@@ -4,7 +4,8 @@ import MultipleResponseEditor from './MultipleResponseQuestion/MultipleResponseE
 import OrderingEditor from './OrderingQuestion/OrderingEditor';
 
 const EditQuestion = ({ questions, setQuestions }) => {
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(null);
+  const [savedFlags, setSavedFlags] = useState(questions.map(() => true));
 
   const editQuestion = (q, index) => {
     setQuestions(prev => {
@@ -43,6 +44,13 @@ const EditQuestion = ({ questions, setQuestions }) => {
         key={index}
         question={question}
         setQuestion={(q) => editQuestion(q, index)}
+        setIsSaved={(b) => 
+          setSavedFlags(prev => {
+            const updated = [...prev];
+            updated[index] = b;
+            return updated;
+          })
+        }
       />
     );
   };
@@ -58,7 +66,7 @@ const EditQuestion = ({ questions, setQuestions }) => {
                 type="button"
                 onClick={() => setCurrentQuestionIndex(prev => prev === index ? null : index)}
               >
-                {q.summary || `問題 ${index + 1}`}
+                {(!savedFlags[index] ? '*' : '') + `問題 ${index + 1}　` + q.summary}
               </button>
             </h2>
             <div
