@@ -6,7 +6,7 @@ import AnswerMRQ from './AnswerMRQ';
 const MultipleResponseEditor = ({ questions, setQuestions }) => {
   const [question, setQuestion] = useState({
     problem: '### 問題文',
-    options: ['', '', '', '', ''],
+    options: ['', ''],
     answer: [],
     explanation: '解説文'
   });
@@ -40,6 +40,10 @@ const MultipleResponseEditor = ({ questions, setQuestions }) => {
       alert('解説文を入力してください');
       return;
     }
+    if (question.options.some((option) => option.trim() === '')) {
+      alert('選択肢に空欄が含まれています。すべての選択肢を入力してください');
+      return;
+    }
 
     const newQuestion = {
       ...question,
@@ -55,6 +59,10 @@ const MultipleResponseEditor = ({ questions, setQuestions }) => {
     alert('問題を保存しました');
   };
 
+  const addOption = () => {
+    setQuestion({ ...question, options: [...question.options, ''] });
+  };
+
   return (
     <div>
       <div onClick={() => {
@@ -66,9 +74,7 @@ const MultipleResponseEditor = ({ questions, setQuestions }) => {
 
       <div className="list-group">
         {question.options.map((option, index) => {
-          const isDisabled = index > 0 && !question.options[index - 1].trim();
           const optionIndex = index + 1;
-
           return (
             <AnswerMRQ
               key={index}
@@ -77,7 +83,6 @@ const MultipleResponseEditor = ({ questions, setQuestions }) => {
               checked={question.answer.includes(optionIndex)}
               onChange={(e) => {
                 const selected = Number(e.target.value);
-                console.log('selected: ',selected);
                 setQuestion((prev) => {
                   if (prev.answer.includes(selected)) {
                     return {...prev, answer: prev.answer.filter(index => index !== selected)};
@@ -87,18 +92,27 @@ const MultipleResponseEditor = ({ questions, setQuestions }) => {
                 })
               }}
               onClick={() => {
-                if (isDisabled) {
-                  alert(`先に選択肢${index}を作成してください。`);
-                  return;
-                }
                 setEditingOptionIndex(index);
                 setTempOption(option);
                 setShowOptionModal(true);
+              }}
+              onDelete={(deleteIndex) => {
+                const newOptions = question.options.filter((_, i) => i !== deleteIndex);
+                const newAnswer = question.answer
+                  .filter((ans) => ans !== deleteIndex + 1)
+                  .map((ans) => (ans > deleteIndex + 1 ? ans - 1 : ans));
+                setQuestion({ ...question, options: newOptions, answer: newAnswer });
               }}
               disabled={!option.trim()}
             />
           )
         })}
+        <button
+          className="list-group-item list-group-item-action text-center text-primary"
+          onClick={addOption}
+        >
+          ＋ 選択肢を追加
+        </button>
       </div>
 
       <div 

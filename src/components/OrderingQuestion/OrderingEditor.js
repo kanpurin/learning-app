@@ -40,6 +40,10 @@ const MultipleOrderEditor = ({ questions, setQuestions }) => {
       alert('解説文を入力してください');
       return;
     }
+    if (question.options.some((option) => option.trim() === '')) {
+      alert('選択肢に空欄が含まれています。すべての選択肢を入力してください');
+      return;
+    }
 
     const newQuestion = {
       ...question,
@@ -55,6 +59,10 @@ const MultipleOrderEditor = ({ questions, setQuestions }) => {
     alert('問題を保存しました');
   };
 
+  const addOption = () => {
+    setQuestion({ ...question, options: [...question.options, ''] });
+  };
+
   return (
     <div>
       <div onClick={() => {
@@ -66,7 +74,6 @@ const MultipleOrderEditor = ({ questions, setQuestions }) => {
 
       <div className="list-group">
         {question.options.map((option, index) => {
-          const isDisabled = index > 0 && !question.options[index - 1].trim();
           const optionIndex = index + 1;
           const selectedIndex = question.answer.indexOf(optionIndex) + 1;
 
@@ -88,18 +95,28 @@ const MultipleOrderEditor = ({ questions, setQuestions }) => {
                 })
               }}
               onClick={() => {
-                if (isDisabled) {
-                  alert(`先に選択肢${index}を作成してください。`);
-                  return;
-                }
                 setEditingOptionIndex(index);
                 setTempOption(option);
                 setShowOptionModal(true);
+              }}
+              onDelete={(deleteIndex) => {
+                const newOptions = question.options.filter((_, i) => i !== deleteIndex);
+                const newAnswer = question.answer
+                  .filter((ans) => ans !== deleteIndex + 1)
+                  .map((ans) => (ans > deleteIndex + 1 ? ans - 1 : ans));
+                setQuestion({ ...question, options: newOptions, answer: newAnswer });
               }}
               disabled={!option.trim()}
             />
           )
         })}
+        
+        <button
+          className="list-group-item list-group-item-action text-center text-primary"
+          onClick={addOption}
+        >
+          ＋ 選択肢を追加
+        </button>
       </div>
 
       <div 
