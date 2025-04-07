@@ -14,14 +14,29 @@ const EditQuestion = ({ questions, setQuestions }) => {
     });
   };
 
+  const deleteQuestion = (index) => {
+    const confirmDelete = window.confirm(`質問 ${index + 1} を削除してもよろしいですか？`);
+    if (!confirmDelete) return;
+
+    setQuestions(prev => {
+      const updated = [...prev];
+      updated.splice(index, 1);
+      return updated;
+    });
+
+    setCurrentQuestionIndex(prev => {
+      if (index === prev && prev > 0) return prev - 1;
+      if (index < prev) return prev - 1;
+      return prev;
+    });
+  };
+
   const getQEditor = (question, index) => {
     const QEditor = {
       mcq: MultipleChoiceEditor,
       mrq: MultipleResponseEditor,
       order: OrderingEditor
     }[question.type] || MultipleChoiceEditor;
-    console.log(questions[index]);
-    console.log(question);
 
     return (
       <QEditor
@@ -43,7 +58,23 @@ const EditQuestion = ({ questions, setQuestions }) => {
                 type="button"
                 onClick={() => setCurrentQuestionIndex(index)}
               >
-                {q.summary ? <>q.summary</> : <>質問 {index + 1}（{q.type}</>}
+                <input
+                  type="text"
+                  className="form-control border-0 bg-transparent p-0 m-0"
+                  value={q.summary || `質問 ${index + 1}（${q.type}）`}
+                  onClick={(e) => e.stopPropagation()} // アコーディオンが開閉しないように
+                  onChange={(e) => {
+                    const newSummary = e.target.value;
+                    setQuestions(prev => {
+                      const updated = [...prev];
+                      updated[index] = {
+                        ...updated[index],
+                        summary: newSummary
+                      };
+                      return updated;
+                    });
+                  }}
+                />
               </button>
             </h2>
             <div
@@ -51,10 +82,21 @@ const EditQuestion = ({ questions, setQuestions }) => {
             >
               <div className="accordion-body">
                 {getQEditor(q, index)}
+                <div className="text-end mt-3">
+                  <button
+                    className="btn btn-danger btn-sm"
+                    onClick={() => deleteQuestion(index)}
+                  >
+                    この問題を削除
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         ))}
+        {questions.length === 0 && (
+          <div className="alert alert-info mt-3">問題がありません。</div>
+        )}
       </div>
     </div>
   );

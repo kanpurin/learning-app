@@ -39,6 +39,7 @@ const JSONReader = ({ onDataLoad, questions }) => {
       priority: parseFloat(item.priority),
       gap: parseInt(item.gap, 10),
       type: item.type,
+      summary: item.summary || ''
     }));
 
     onDataLoad(newQuestions, fileName);

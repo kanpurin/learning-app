@@ -17,6 +17,7 @@ const JSONWriter = ({ questions, fileName, setFileName }) => {
       priority: question.priority,
       gap: question.gap,
       type: question.type,
+      summary: question.summary || ''
     }));
 
     const json = JSON.stringify(dataToExport, null, 2); // 整形して見やすく
