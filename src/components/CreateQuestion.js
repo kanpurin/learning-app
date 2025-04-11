@@ -28,14 +28,6 @@ const CreateQuestion = ({ questions, setQuestions }) => {
       <div className="card p-4 shadow-sm">
         <QCreator questions={questions} setQuestions={setQuestions} />
       </div>
-      {/* {questions.length > 0 && (
-          <div className="mt-4">
-            <h5>作成済みの問題（{questions.length}件）</h5>
-            <pre style={{ whiteSpace: 'pre-wrap', backgroundColor: '#f9f9f9', padding: '10px' }}>
-              {JSON.stringify(questions, null, 2)}
-            </pre>
-          </div>
-        )} */}
     </div>
   );
 };

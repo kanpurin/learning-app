@@ -52,7 +52,9 @@ const MultipleChoiceCreator = ({ questions, setQuestions }) => {
       attempts: 0,
       correctCount: 0,
       priority: 1.0,
-      gap: 100
+      gap: 100,
+      summary: '',
+      deleted: false
     };
 
     setQuestions([...questions, newQuestion]);

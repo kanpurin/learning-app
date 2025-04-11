@@ -20,16 +20,16 @@ const EditQuestion = ({ questions, setQuestions }) => {
     if (!confirmDelete) return;
 
     setQuestions(prev => {
-      const updated = [...prev];
-      updated.splice(index, 1);
-      return updated;
-    });
+        const updated = [...prev];
+        updated[index].deleted = true;
+        return updated;
+    })
 
-    setCurrentQuestionIndex(prev => {
-      if (index === prev && prev > 0) return prev - 1;
-      if (index < prev) return prev - 1;
-      return prev;
-    });
+    // setQuestions(prev => {
+    //   const updated = [...prev];
+    //   updated.splice(index, 1);
+    //   return updated;
+    // });
   };
 
   const getQEditor = (question, index) => {
@@ -62,15 +62,19 @@ const EditQuestion = ({ questions, setQuestions }) => {
           <div className="accordion-item" key={index}>
             <h2 className="accordion-header">
               <button
-                className={`accordion-button ${currentQuestionIndex === index ? '' : 'collapsed'}`}
+                className={`accordion-button ${currentQuestionIndex === index && !q.deleted ? '' : 'collapsed'}`}
                 type="button"
                 onClick={() => setCurrentQuestionIndex(prev => prev === index ? null : index)}
               >
-                {(!savedFlags[index] ? '*' : '') + `問題 ${index + 1}　` + q.summary}
+                {q.deleted ? (
+                  <span style={{ color: 'gray' }}>削除済み問題</span>
+                ) : (
+                  (!savedFlags[index] ? '*' : '') + `問題 ${index + 1}　` + q.summary
+                )}
               </button>
             </h2>
             <div
-              className={`accordion-collapse collapse ${currentQuestionIndex === index ? 'show' : ''}`}
+              className={`accordion-collapse collapse ${currentQuestionIndex === index && !q.deleted ? 'show' : ''}`}
             >
               <div className="accordion-body">
                 {getQEditor(q, index)}

@@ -39,14 +39,15 @@ const Question = ({ questions, setQuestions }) => {
 	};
 
 	const setNextQuestionIndex = () => {
+		setQuestions(prevQuestions => prevQuestions.filter(q => !q.deleted));
 		const nextIndex = selectNextQuestionIndex();
 		setCurrentQuestionIndex(nextIndex);
 	}
 
-  const startQuiz = () => {
-    setQuizStarted(true);
-		setNextQuestionIndex();
-  };
+	const startQuiz = () => {
+		setQuizStarted(true);
+			setNextQuestionIndex();
+	};
 
 	// isAnswered が更新されたタイミングで学習履歴を更新
 	useEffect(() => {
