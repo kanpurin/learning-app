@@ -11,6 +11,7 @@ const App = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('quiz');
   const [fileName, setFileName] = useState('questions_data');
+  const [savedFlags, setSavedFlags] = useState(questions.map(() => true));
 
   const handleDataLoad = (newQuestions, uploadedFileName) => {
     setQuestions(newQuestions);
@@ -50,7 +51,14 @@ const App = () => {
               <button
                 className={`nav-link ${activeTab === 'quiz' ? 'active' : ''}`}
                 style={{ minWidth: '150px' }}
-                onClick={() => setActiveTab('quiz')}
+                onClick={() => {
+                  const hasUnsavedQuestions = savedFlags.some(f => f === false);
+                  if (hasUnsavedQuestions) {
+                    alert('保存されていない問題があります。問題を解く前に保存してください。');
+                    return;
+                  }
+                  setActiveTab('quiz');
+                }}
               >
                 問題を解く
               </button>
@@ -87,7 +95,7 @@ const App = () => {
         </div>
         <div style={{ display: activeTab === 'edit' ? 'block' : 'none' }}>
           {questions.length > 0 && (
-            <EditQuestion questions={questions} setQuestions={setQuestions} />
+            <EditQuestion questions={questions} setQuestions={setQuestions} savedFlags={savedFlags} setSavedFlags={setSavedFlags} />
           )}
         </div>
       </div>

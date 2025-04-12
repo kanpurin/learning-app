@@ -3,9 +3,8 @@ import MultipleChoiceEditor from './MultipleChoiceQuestion/MultipleChoiceEditor'
 import MultipleResponseEditor from './MultipleResponseQuestion/MultipleResponseEditor';
 import OrderingEditor from './OrderingQuestion/OrderingEditor';
 
-const EditQuestion = ({ questions, setQuestions }) => {
+const EditQuestion = ({ questions, setQuestions, savedFlags, setSavedFlags }) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(null);
-  const [savedFlags, setSavedFlags] = useState(questions.map(() => true));
 
   const editQuestion = (q, index) => {
     setQuestions(prev => {
