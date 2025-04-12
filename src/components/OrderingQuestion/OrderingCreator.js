@@ -54,7 +54,10 @@ const MultipleOrderCreator = ({ questions, setQuestions }) => {
       priority: 1.0,
       gap: 100,
       summary: '',
-      deleted: false
+      deleted: false,
+      stability: null,
+      difficulty: null,
+      lastAnsweredDate: null,
     };
 
     setQuestions([...questions, newQuestion]);

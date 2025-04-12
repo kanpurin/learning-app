@@ -1,5 +1,7 @@
+import { differenceInDays, isSameDay } from 'date-fns';
 import React, { useState, useEffect } from 'react';
 import { tau, alpha, beta } from '../constants';
+import { initStability, nextStability_f, nextStability_r, nextStability_short, initDifficulty, nextDifficulty } from '../utils';
 import MultipleChoiceQuestion from './MultipleChoiceQuestion/MultipleChoiceQuestion';
 import MultipleResponseQuestion from './MultipleResponseQuestion/MultipleResponseQuestion';
 import OrderingQuestion from './OrderingQuestion/OrderingQuestion';
@@ -8,6 +10,8 @@ const Question = ({ questions, setQuestions }) => {
 	const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 	const [isCorrect, setIsCorrect] = useState(false);
 	const [isAnswered, setIsAnswered] = useState(false);
+	const [selectedGrade, setSelectedGrade] = useState(null);
+	const [memoryMode, setMemoryMode] = useState(null); // 'short' or 'long'
 	const [quizStarted, setQuizStarted] = useState(false);
 
 	const currentQuestion = questions[currentQuestionIndex];
@@ -15,17 +19,26 @@ const Question = ({ questions, setQuestions }) => {
 	const selectNextQuestionIndex = () => {
 		let totalWeight = 0;
 		let weights = questions.map((q, index) => {
+			// recallの計算
+			const now = new Date();
+			const lastAnsweredDate = new Date(q.lastAnsweredDate);
+			const daysElapsed = differenceInDays(now, lastAnsweredDate);
+			const recall = 1 / (1 + daysElapsed / (9 * q.stability));
+	
+			// memoryModeがlongの場合、recallが0.9未満の問題だけを対象
+			if (memoryMode === 'long' && recall >= 0.9) {
+				return null; // recallが0.9以上ならスキップ
+			}
+	
 			let D = 1 - Math.exp(-q.gap / tau);
 			let W = q.priority * D;
 			totalWeight += W;
 			return { index, weight: W };
-		});
-
+		}).filter(weight => weight !== null); // nullをフィルタリング
+	
+		// 重みを元に次の問題を選ぶ
 		let rand = Math.random() * totalWeight;
 		let sum = 0;
-		console.log('priority:',questions.map(q => {return q.priority}));
-		console.log('gap:',questions.map(q => {return q.gap}));
-		console.log('wiehgt:',weights.map(q => {return q.weight}));
 		for (let { index, weight } of weights) {
 			sum += weight;
 			if (rand <= sum) {
@@ -46,21 +59,49 @@ const Question = ({ questions, setQuestions }) => {
 			setNextQuestionIndex();
 	};
 
-	// isAnswered が更新されたタイミングで学習履歴を更新
+	// 学習履歴を更新
 	useEffect(() => {
-		if (isAnswered) {
+		if (isAnswered && selectedGrade) {
 			setQuestions((prevQuestions) => {
 				return prevQuestions.map((q, index) => {
 					if (index === currentQuestionIndex) {
 						const newAttempts = q.attempts + 1;
 						const newCorrectCount = isCorrect ? q.correctCount + 1 : q.correctCount;
 						const newPriority = q.priority * (isCorrect ? 1 - alpha : 1 + beta);
+						const grade = isCorrect ? selectedGrade : 1; // 1-4(間違えたら1)
+
+						let newStability, newDifficulty;
+						const now = new Date();
+
+						if (q.lastAnsweredDate === null) {
+							newStability = initStability(grade);
+							newDifficulty = initDifficulty(grade);
+						}
+						else {
+							const lastDate = new Date(q.lastAnsweredDate);
+							const daysElapsed = differenceInDays(now, lastDate);
+							const recall = 1 / (1 + daysElapsed / (9 * q.stability));
+				
+							if (isSameDay(now, lastDate)) {
+								newStability = nextStability_short(q.stability, grade);
+							} else if (isCorrect) {
+								newStability = nextStability_r(q.difficulty, q.stability, recall, grade);
+							} else {
+								newStability = nextStability_f(q.difficulty, q.stability, recall);
+							}
+				
+							newDifficulty = nextDifficulty(q.difficulty, grade);
+						}
+						console.log('stability', newStability, 'difficulty', newDifficulty, 'lastAnsweredDate', now.toISOString());
 						return {
 							...q,
 							attempts: newAttempts,
 							correctCount: newCorrectCount,
 							priority: newPriority,
-							gap: 0
+							gap: 0,
+							stability: newStability,
+							difficulty: newDifficulty,
+							lastAnsweredDate: now.toISOString()
 						};
 					}
 					else {
@@ -74,7 +115,7 @@ const Question = ({ questions, setQuestions }) => {
 			});
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [isAnswered]); // isAnswered の変更を監視
+	}, [isAnswered, selectedGrade]);
 
 	const Qtype = {
 		mcq: MultipleChoiceQuestion,
@@ -86,7 +127,26 @@ const Question = ({ questions, setQuestions }) => {
 		<div>
 			{!quizStarted && (
 				<div className="text-center mt-4">
-					<button className="btn btn-primary" onClick={startQuiz}>
+					<p className="mb-3">記憶モードを選んでください</p>
+					<div className="d-flex justify-content-center gap-3 mb-3">
+						<button
+							className={`btn ${memoryMode === 'short' ? 'btn-success' : 'btn-outline-success'}`}
+							onClick={() => setMemoryMode('short')}
+						>
+							短期記憶
+						</button>
+						<button
+							className={`btn ${memoryMode === 'long' ? 'btn-primary' : 'btn-outline-primary'}`}
+							onClick={() => setMemoryMode('long')}
+						>
+							長期記憶
+						</button>
+					</div>
+					<button
+						className="btn btn-dark"
+						onClick={startQuiz}
+						disabled={!memoryMode}
+					>
 						クイズを開始
 					</button>
 				</div>
@@ -101,6 +161,9 @@ const Question = ({ questions, setQuestions }) => {
 							setNextQuestionIndex={setNextQuestionIndex}
 							isAnswered={isAnswered}
 							setIsAnswered={setIsAnswered}
+							selectedGrade={selectedGrade}
+							setSelectedGrade={setSelectedGrade}
+							memoryMode={memoryMode}
 						/>
 					</div>
 				</div>

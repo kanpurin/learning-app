@@ -4,8 +4,9 @@ import AnswerFeedback from '../AnswerFeedback';
 import AnswerButton from '../AnswerButton';
 import NextQuestionButton from '../NextQuestionButton';
 import MarkdownArea from '../MarkdownArea';
+import GradeButton from '../GradeButton';
 
-const MultipleResponseQuestion = ({ question, isCorrect, setIsCorrect, setNextQuestionIndex, isAnswered, setIsAnswered }) => {
+const MultipleResponseQuestion = ({ question, isCorrect, setIsCorrect, setNextQuestionIndex, isAnswered, setIsAnswered, selectedGrade, setSelectedGrade, memoryMode }) => {
   const [selectedIndices, setSelectedIndices] = useState([]);
 
   const correctIndices = question.answer
@@ -32,13 +33,16 @@ const MultipleResponseQuestion = ({ question, isCorrect, setIsCorrect, setNextQu
     setSelectedIndices([]);
     setIsAnswered(false);
     setIsCorrect(false);
+    setSelectedGrade(null);
     setNextQuestionIndex();
   };
 
   // 回答ボタンの処理
   const handleAnswer = () => {
     setIsAnswered(true);
-    setIsCorrect(checkAnswer(selectedIndices));
+    const correct = checkAnswer(selectedIndices);
+    setIsCorrect(correct);
+    setSelectedGrade(correct ? (memoryMode === 'short' ? 2 : null) : 1);
   }
 
   return (
@@ -65,11 +69,14 @@ const MultipleResponseQuestion = ({ question, isCorrect, setIsCorrect, setNextQu
 
       {/* 正誤判定の表示 */}
       <AnswerFeedback explanation={question.explanation} isAnswered={isAnswered} isCorrect={isCorrect} />
+      
+      {/* 難易度評価ボタン */}
+      { isAnswered && memoryMode ==='long' && <GradeButton selectedGrade={selectedGrade} setSelectedGrade={setSelectedGrade} /> }
 
       {/* ボタン（回答 & 次の問題） */}
       <div className="d-flex justify-content-center gap-3 mt-4">
         <AnswerButton handleAnswer={handleAnswer} disabled={isAnswered || selectedIndices.length === 0} />
-        <NextQuestionButton onNext={handleNextQuestion} disabled={!isAnswered} />
+        <NextQuestionButton onNext={handleNextQuestion} disabled={!isAnswered || !selectedGrade} />
       </div>
     </div>
   );

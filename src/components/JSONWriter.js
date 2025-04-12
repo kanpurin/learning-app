@@ -17,7 +17,10 @@ const JSONWriter = ({ questions, fileName, setFileName }) => {
       priority: question.priority,
       gap: question.gap,
       type: question.type,
-      summary: question.summary || ''
+      summary: question.summary || '',
+      stability: question.stability || '',
+      difficulty: question.difficulty || '',
+      lastAnsweredDate: question.lastAnsweredDate || '',
     }));
 
     const json = JSON.stringify(dataToExport, null, 2); // 整形して見やすく

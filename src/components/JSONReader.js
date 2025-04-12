@@ -40,7 +40,10 @@ const JSONReader = ({ onDataLoad, questions }) => {
       gap: parseInt(item.gap, 10),
       type: item.type,
       summary: item.summary || '',
-      deleted: false
+      deleted: false,
+      stability: item.stability || null,
+      difficulty: item.difficulty || null,
+      lastAnsweredDate: item.lastAnsweredDate || null,
     }));
 
     onDataLoad(newQuestions, fileName);

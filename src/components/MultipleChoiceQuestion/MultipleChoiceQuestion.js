@@ -4,8 +4,9 @@ import AnswerFeedback from '../AnswerFeedback';
 import AnswerButton from '../AnswerButton';
 import NextQuestionButton from '../NextQuestionButton';
 import MarkdownArea from '../MarkdownArea';
+import GradeButton from '../GradeButton';
 
-const MultipleChoiceQuestion = ({ question, isCorrect, setIsCorrect, setNextQuestionIndex, isAnswered, setIsAnswered }) => {
+const MultipleChoiceQuestion = ({ question, isCorrect, setIsCorrect, setNextQuestionIndex, isAnswered, setIsAnswered, selectedGrade, setSelectedGrade, memoryMode }) => {
   const [selectedIndex, setSelectedIndex] = useState(-1);
 
   const correctIndex = Number(question.answer[0]);
@@ -16,7 +17,6 @@ const MultipleChoiceQuestion = ({ question, isCorrect, setIsCorrect, setNextQues
   const handleChange = (e) => {
     const selected = Number(e.target.value);
     setSelectedIndex(selected);
-    setIsCorrect(checkAnswer(selected));
   };
 
   // 次の問題に進む処理
@@ -24,12 +24,16 @@ const MultipleChoiceQuestion = ({ question, isCorrect, setIsCorrect, setNextQues
     setSelectedIndex(-1);
     setIsAnswered(false);
     setIsCorrect(false);
+    setSelectedGrade(null);
     setNextQuestionIndex();
   };
 
   // 回答ボタンの処理
   const handleAnswer = () => {
     setIsAnswered(true);
+    const correct = checkAnswer(selectedIndex);
+    setIsCorrect(correct);
+    setSelectedGrade(correct ? (memoryMode === 'short' ? 2 : null) : 1);
   }
 
   return (
@@ -57,10 +61,13 @@ const MultipleChoiceQuestion = ({ question, isCorrect, setIsCorrect, setNextQues
       {/* 正誤判定の表示 */}
       <AnswerFeedback explanation={question.explanation} isAnswered={isAnswered} isCorrect={isCorrect} />
 
+      {/* 難易度評価ボタン */}
+      { isAnswered && memoryMode ==='long' && <GradeButton selectedGrade={selectedGrade} setSelectedGrade={setSelectedGrade} /> }
+
       {/* ボタン（回答 & 次の問題） */}
       <div className="d-flex justify-content-center gap-3 mt-4">
         <AnswerButton handleAnswer={handleAnswer} disabled={isAnswered || selectedIndex === -1} />
-        <NextQuestionButton onNext={handleNextQuestion} disabled={!isAnswered} />
+        <NextQuestionButton onNext={handleNextQuestion} disabled={!isAnswered || !selectedGrade} />
       </div>
     </div>
   );
