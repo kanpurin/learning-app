@@ -88,7 +88,6 @@ const MultipleOrderCreator = ({ questions, setQuestions }) => {
               onChange={(e) => {
                 const selected = Number(e.target.value);
                 setQuestion((prev) => {
-                  console.log('selected:', selected);
                   if (prev.answer.includes(selected)) {
                     return {...prev, answer: prev.answer.filter(index => index !== selected)};
                   } else {

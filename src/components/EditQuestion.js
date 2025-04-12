@@ -24,12 +24,6 @@ const EditQuestion = ({ questions, setQuestions }) => {
         updated[index].deleted = true;
         return updated;
     })
-
-    // setQuestions(prev => {
-    //   const updated = [...prev];
-    //   updated.splice(index, 1);
-    //   return updated;
-    // });
   };
 
   const getQEditor = (question, index) => {

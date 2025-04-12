@@ -11,6 +11,11 @@ const MultipleChoiceEditor = ({ question, setQuestion, setIsSaved }) => {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
   }, [updatedQuestion]);
 
+  useEffect(() => {
+    setUpdatedQuestion(question);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [question]);
+
   const [showProblemModal, setShowProblemModal] = useState(false);
   const [tempProblem, setTempProblem] = useState('');
 
