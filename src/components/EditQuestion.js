@@ -22,7 +22,13 @@ const EditQuestion = ({ questions, setQuestions, savedFlags, setSavedFlags }) =>
         const updated = [...prev];
         updated[index].deleted = true;
         return updated;
-    })
+    });
+    
+    setSavedFlags(prev => {
+      const updated = [...prev];
+      updated[index] = true;
+      return updated;
+    });
   };
 
   const getQEditor = (question, index) => {
