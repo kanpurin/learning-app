@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { tau, alpha, beta } from '../constants';
 import MultipleChoiceQuestion from './MultipleChoiceQuestion/MultipleChoiceQuestion';
 import MultipleResponseQuestion from './MultipleResponseQuestion/MultipleResponseQuestion';
 import OrderingQuestion from './OrderingQuestion/OrderingQuestion';
@@ -10,10 +11,6 @@ const Question = ({ questions, setQuestions }) => {
 	const [quizStarted, setQuizStarted] = useState(false);
 
 	const currentQuestion = questions[currentQuestionIndex];
-
-	const alpha = 0.2;	// 正解時のS_i減衰率
-	const beta = 0.3;		// 不正解時のS_i上昇率
-	const tau = 10;			// 経過回数に対する割引パラメータ
 
 	const selectNextQuestionIndex = () => {
 		let totalWeight = 0;
