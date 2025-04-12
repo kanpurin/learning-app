@@ -128,7 +128,7 @@ FSRSでは、レビューの遅延（すなわち、期限を過ぎたレビュ�
 
 遅延が増加すると、保持率（R）は減少します。レビューが成功した場合、上記のポイント3に従って、次の安定性（S）は高くなります。ただし、SM-2/Ankiアルゴリズムのように遅延とともに線形に増加するのではなく、次の安定性はFSRSパラメータに依存する上限に収束します。
 
-![alt text](https://user-images.githubusercontent.com/32575846/235642239-25de48b8-5dc6-4450-94e5-0bbf8165a559.png))
+![alt text](https://user-images.githubusercontent.com/32575846/235642239-25de48b8-5dc6-4450-94e5-0bbf8165a559.png)
 
 このプレイグラウンドでパラメータを変更できます: https://www.geogebra.org/calculator/ahqmqjvx.
 
