@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import GoogleDriveReader from './GoogleDriveReader';
 
 const JSONReader = ({ onDataLoad, questions }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -65,6 +66,10 @@ const JSONReader = ({ onDataLoad, questions }) => {
             className="form-control"
             disabled={isLoading}
           />
+        </div>
+        
+        <div className="d-flex justify-content-center mb-3">
+          <GoogleDriveReader loadJSON={loadJSON} questions={questions} />
         </div>
       </div>
     </div>

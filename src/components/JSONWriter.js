@@ -1,4 +1,5 @@
 import React from 'react';
+import GoogleDriveWriter from './GoogleDriveWriter';
 
 // 学習履歴JSONを保存するコンポーネント
 const JSONWriter = ({ questions, fileName, setFileName }) => {
@@ -44,11 +45,11 @@ const JSONWriter = ({ questions, fileName, setFileName }) => {
           onChange={handleFileNameChange}
           placeholder="ファイル名を入力"
         />
+        <button className="btn btn-success form-control" onClick={handleDownload}>
+          学習履歴JSONを保存
+        </button>
+        <GoogleDriveWriter questions={questions} fileName={fileName} />
       </div>
-
-      <button className="btn btn-success" onClick={handleDownload}>
-        学習履歴JSONを保存
-      </button>
     </div>
   );
 };
