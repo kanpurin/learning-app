@@ -6,6 +6,7 @@ import AnswerMCQ from './AnswerMCQ';
 const MultipleChoiceCreator = ({ questions, setQuestions }) => {
   const [tagInput, setTagInput] = useState('');
   const [question, setQuestion] = useState({
+    summary: '',
     problem: '### 問題文',
     options: ['', ''],
     answer: [],
@@ -70,7 +71,6 @@ const MultipleChoiceCreator = ({ questions, setQuestions }) => {
       correctCount: 0,
       priority: 1.0,
       gap: 100,
-      summary: '',
       deleted: false,
       stability: null,
       difficulty: null,
@@ -87,6 +87,20 @@ const MultipleChoiceCreator = ({ questions, setQuestions }) => {
 
   return (
     <div>
+      <div className="mb-3 border-bottom pb-2">
+        <input
+          type="text"
+          className="form-control"
+          style={{ borderRadius: '0', boxShadow: 'none' }}
+          placeholder="問題のタイトル（summary）"
+          value={question.summary}
+          onChange={(e) => {
+            const newSummary = e.target.value;
+            setQuestion(prev => ({ ...prev, summary: newSummary }));
+          }}
+        />
+      </div>
+
       <div onClick={() => {
         setTempProblem(question.problem);
         setShowProblemModal(true);
