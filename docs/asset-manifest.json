@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/learning-app/static/css/main.fdc347ef.css",
-    "main.js": "/learning-app/static/js/main.bc4eda24.js",
+    "main.js": "/learning-app/static/js/main.b3799aa8.js",
     "static/js/453.14b6b8d9.chunk.js": "/learning-app/static/js/453.14b6b8d9.chunk.js",
     "static/media/KaTeX_AMS-Regular.ttf": "/learning-app/static/media/KaTeX_AMS-Regular.853be92419a6c3766b9a.ttf",
     "static/media/KaTeX_Main-Regular.ttf": "/learning-app/static/media/KaTeX_Main-Regular.9eba1d77abcf2aa6e94e.ttf",
@@ -65,11 +65,11 @@
     "static/media/KaTeX_Size3-Regular.woff2": "/learning-app/static/media/KaTeX_Size3-Regular.e1951519f6f0596f7356.woff2",
     "index.html": "/learning-app/index.html",
     "main.fdc347ef.css.map": "/learning-app/static/css/main.fdc347ef.css.map",
-    "main.bc4eda24.js.map": "/learning-app/static/js/main.bc4eda24.js.map",
+    "main.b3799aa8.js.map": "/learning-app/static/js/main.b3799aa8.js.map",
     "453.14b6b8d9.chunk.js.map": "/learning-app/static/js/453.14b6b8d9.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.fdc347ef.css",
-    "static/js/main.bc4eda24.js"
+    "static/js/main.b3799aa8.js"
   ]
 }
