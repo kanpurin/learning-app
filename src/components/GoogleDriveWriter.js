@@ -124,10 +124,8 @@ const GoogleDriveWriter = ({ questions, fileName }) => {
       });
 
       alert('ファイルがアップロードされました！');
-      console.log('アップロード成功:', response.result);
     } catch (error) {
       alert('ファイルのアップロードに失敗しました');
-      console.error('アップロードエラー:', error);
     }
   };
 
@@ -168,10 +166,8 @@ const GoogleDriveWriter = ({ questions, fileName }) => {
       });
   
       alert('ファイルがアップロードされました！');
-      console.log('アップロード成功:', response.result);
     } catch (error) {
       alert('ファイルのアップロードに失敗しました');
-      console.error('アップロードエラー:', error);
     }
   };
 

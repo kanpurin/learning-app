@@ -101,7 +101,6 @@ const Question = ({ questions, setQuestions }) => {
 				
 							newDifficulty = nextDifficulty(q.difficulty, grade);
 						}
-						console.log('stability', newStability, 'difficulty', newDifficulty, 'lastAnsweredDate', now.toISOString());
 						return {
 							...q,
 							attempts: newAttempts,
