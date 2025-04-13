@@ -14,7 +14,14 @@ const Question = ({ questions, setQuestions }) => {
 	const [memoryMode, setMemoryMode] = useState(null); // 'short' or 'long'
 	const [quizStarted, setQuizStarted] = useState(false);
 
-	const currentQuestion = questions[currentQuestionIndex];
+	const currentQuestion = currentQuestionIndex !== null ? questions[currentQuestionIndex] : null;
+
+	useEffect(() => {
+		if (currentQuestionIndex === null && selectNextQuestionIndex() !== null) {
+			setNextQuestionIndex();
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [questions]);
 
 	const selectNextQuestionIndex = () => {
 		let totalWeight = 0;
@@ -23,7 +30,9 @@ const Question = ({ questions, setQuestions }) => {
 			const now = new Date();
 			const lastAnsweredDate = new Date(q.lastAnsweredDate);
 			const daysElapsed = differenceInDays(now, lastAnsweredDate);
-			const recall = 1 / (1 + daysElapsed / (9 * q.stability));
+			const decay = -0.5;
+			const factor = 19 / 81;
+			const recall = Math.pow(1 + factor * daysElapsed / q.stability, decay);
 	
 			// memoryModeがlongの場合、recallが0.9未満の問題だけを対象
 			if (memoryMode === 'long' && recall >= 0.9) {
@@ -45,7 +54,7 @@ const Question = ({ questions, setQuestions }) => {
 				return index;
 			}
 		}
-		return questions.length - 1; // 念のため最後の要素
+		return null; // 念のため最後の要素
 	};
 
 	const setNextQuestionIndex = () => {
@@ -56,7 +65,7 @@ const Question = ({ questions, setQuestions }) => {
 
 	const startQuiz = () => {
 		setQuizStarted(true);
-			setNextQuestionIndex();
+		setNextQuestionIndex();
 	};
 
 	// 学習履歴を更新
@@ -121,7 +130,7 @@ const Question = ({ questions, setQuestions }) => {
 		mcq: MultipleChoiceQuestion,
 		mrq: MultipleResponseQuestion,
 		order: OrderingQuestion
-	}[currentQuestion.type] || MultipleChoiceQuestion;
+	}[currentQuestion === null ? null : currentQuestion.type] || MultipleChoiceQuestion;
 
   return (
 		<div>
@@ -151,7 +160,12 @@ const Question = ({ questions, setQuestions }) => {
 					</button>
 				</div>
 			)}
-			{quizStarted && (
+			{quizStarted && currentQuestionIndex === null && (
+				<div className="text-center mt-5">
+					<h4>すべての問題を解き終わりました！</h4>
+				</div>
+			)}
+			{quizStarted && currentQuestionIndex !== null && (
 				<div className="container mt-4">
 					<div className="card p-4 shadow-sm">
 						<Qtype
