@@ -5,11 +5,27 @@ import AnswerOrder from './AnswerOrder';
 
 const MultipleOrderCreator = ({ question, setQuestion, setIsSaved }) => {
   const [updatedQuestion, setUpdatedQuestion] = useState(question);
+    const [tagInput, setTagInput] = useState('');
 
   useEffect(() => {
     setIsSaved(JSON.stringify(updatedQuestion) === JSON.stringify(question));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [updatedQuestion]);
+
+  const addTag = () => {
+    const newTag = tagInput.trim();
+    if (newTag && !updatedQuestion.tags.includes(newTag)) {
+      setUpdatedQuestion({ ...updatedQuestion, tags: [...updatedQuestion.tags, newTag] });
+    }
+    setTagInput('');
+  };
+  
+  const removeTag = (tagToRemove) => {
+    setUpdatedQuestion({
+      ...updatedQuestion,
+      tags: updatedQuestion.tags.filter(tag => tag !== tagToRemove),
+    });
+  };
 
   const [showProblemModal, setShowProblemModal] = useState(false);
   const [tempProblem, setTempProblem] = useState('');
@@ -132,6 +148,41 @@ const MultipleOrderCreator = ({ question, setQuestion, setIsSaved }) => {
         }}
       >
         <MarkdownArea text={updatedQuestion.explanation || '解説文'} />
+      </div>
+
+      <div className="mt-3">
+        <div className="d-flex flex-wrap gap-2 mb-2">
+          {updatedQuestion.tags.map((tag, index) => (
+            <span
+              key={index}
+              className="badge bg-light text-dark border d-flex align-items-center"
+              style={{ padding: '0.5em 0.75em', fontSize: '0.9em' }}
+            >
+              {tag}
+              <button
+                type="button"
+                className="btn-close btn-sm ms-2"
+                aria-label="Remove"
+                onClick={() => removeTag(tag)}
+                style={{ fontSize: '0.6em' }}
+              />
+            </span>
+          ))}
+        </div>
+
+        <input
+          type="text"
+          className="form-control"
+          value={tagInput}
+          onChange={(e) => setTagInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              addTag();
+            }
+          }}
+          placeholder="タグを入力して Enter"
+        />
       </div>
 
       <TextEditModal

@@ -45,6 +45,7 @@ const JSONReader = ({ onDataLoad, questions }) => {
       stability: item.stability || null,
       difficulty: item.difficulty || null,
       lastAnsweredDate: item.lastAnsweredDate || null,
+      tags: item.tags || [],
     }));
 
     onDataLoad(newQuestions, fileName);
