@@ -7,9 +7,9 @@ const AnswerMRQ = ({ option, optionIndex, checked, onChange, onClick, onDelete, 
       className='list-group-item list-group-item-action py-2 d-flex justify-content-between align-items-center'
       onClick={onClick}
     >
-      <div className="d-flex align-items-center">
+      <div className="d-flex flex-grow-1 align-items-center" style={{ gap: '0.5em' }}>
         <input
-          className="form-check-input me-2"
+          className="form-check-input"
           type="checkbox"
           value={optionIndex}
           checked={checked}
@@ -17,12 +17,14 @@ const AnswerMRQ = ({ option, optionIndex, checked, onChange, onClick, onDelete, 
           onClick={(e) => e.stopPropagation()}
           disabled={disabled}
         />
-        <MarkdownArea text={option} margin="0em"/>
+        <div style={{ flex: 1 }}>
+          <MarkdownArea text={option} margin="0em"/>
+        </div>
       </div>
       {onDelete && 
         <button
           type="button"
-          className="btn btn-sm text-danger p-0"
+          className="btn btn-sm text-danger p-0 ms-2"
           style={{
             backgroundColor: 'transparent',
             border: 'none',

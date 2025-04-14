@@ -7,7 +7,7 @@ const AnswerOrder = ({ option, optionIndex, selectedIndex, onChange, onClick, on
       className="list-group-item list-group-item-action py-2 d-flex justify-content-between align-items-center"
       onClick={onClick}
     >
-      <div className="d-flex align-items-center">
+      <div className="d-flex flex-grow-1 align-items-center" style={{ gap: '0.5em' }}>
         <span
           className="me-2 d-inline-block text-center border rounded-circle" 
           style={{ width: '24px', height: '24px', lineHeight: '24px' }}
@@ -24,12 +24,14 @@ const AnswerOrder = ({ option, optionIndex, selectedIndex, onChange, onClick, on
           onClick={(e) => e.stopPropagation()}
           disabled={disabled}
         />
-        <MarkdownArea text={option} margin="0em"/>
+        <div style={{ flex: 1 }}>
+          <MarkdownArea text={option} margin="0em"/>
+        </div>
       </div>
       {onDelete && 
         <button
           type="button"
-          className="btn btn-sm text-danger p-0"
+          className="btn btn-sm text-danger p-0 ms-2"
           style={{
             backgroundColor: 'transparent',
             border: 'none',
