@@ -113,7 +113,7 @@ const GoogleDriveWriter = ({ questions, fileName }) => {
       closeDelimiter;
 
     try {
-      const response = await gapi.client.request({
+      await gapi.client.request({
         path: `/upload/drive/v3/files/${fileId}`,
         method: 'PATCH',
         params: { uploadType: 'multipart' },
@@ -155,7 +155,7 @@ const GoogleDriveWriter = ({ questions, fileName }) => {
       closeDelimiter;
   
     try {
-      const response = await gapi.client.request({
+      await gapi.client.request({
         path: '/upload/drive/v3/files',
         method: 'POST',
         params: { uploadType: 'multipart' },
