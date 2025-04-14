@@ -7,10 +7,10 @@ const MultipleResponseCreator = ({ questions, setQuestions }) => {
   const [tagInput, setTagInput] = useState('');
   const [question, setQuestion] = useState({
     summary: '',
-    problem: '### 問題文',
+    problem: '',
     options: ['', ''],
     answer: [],
-    explanation: '解説文',
+    explanation: '',
     tags: [],
   });
 
@@ -42,20 +42,12 @@ const MultipleResponseCreator = ({ questions, setQuestions }) => {
   const handleSave = () => {
     const filledOptions = question.options.filter((opt) => opt.trim() !== '');
 
-    if (!question.problem.trim()) {
-      alert('問題文を入力してください');
-      return;
-    }
     if (filledOptions.length < 2) {
       alert('2つ以上の選択肢を入力してください');
       return;
     }
     if (question.answer.length === 0) {
       alert('正解の選択肢を選んでください');
-      return;
-    }
-    if (!question.explanation.trim()) {
-      alert('解説文を入力してください');
       return;
     }
     if (question.options.some((option) => option.trim() === '')) {
@@ -200,6 +192,7 @@ const MultipleResponseCreator = ({ questions, setQuestions }) => {
       <TextEditModal
         show={showProblemModal}
         title="問題文の編集"
+        placeholder="### 問題文"
         value={tempProblem}
         onChange={setTempProblem}
         onClose={() => setShowProblemModal(false)}
@@ -226,6 +219,7 @@ const MultipleResponseCreator = ({ questions, setQuestions }) => {
       <TextEditModal
         show={showExplanationModal}
         title="解説文の編集"
+        placeholder="解説文"
         value={tempExplanation}
         onChange={setTempExplanation}
         onClose={() => setShowExplanationModal(false)}
@@ -233,6 +227,7 @@ const MultipleResponseCreator = ({ questions, setQuestions }) => {
           setQuestion({ ...question, explanation: tempExplanation });
           setShowExplanationModal(false);
         }}
+        question={question}
       />
 
       <button className="btn btn-primary mt-3" onClick={handleSave}>
