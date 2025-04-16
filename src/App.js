@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Question from './components/Question';
 import CreateQuestion from './components/CreateQuestion';
 import EditQuestion from './components/EditQuestion';
@@ -7,11 +7,32 @@ import JSONWriter from './components/JSONWriter';
 import './App.css';
 
 const App = () => {
-  const [questions, setQuestions] = useState([]);
+  const [questions, setQuestions] = useState(() => {
+    const saved = localStorage.getItem('questions');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [fileName, setFileName] = useState(() => {
+    const saved = localStorage.getItem('fileName');
+    return saved || 'questions_data';
+  });
+  const [activeTab, setActiveTab] = useState(() => {
+    const saved = localStorage.getItem('activeTab');
+    return saved || 'quiz';
+  });
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('quiz');
-  const [fileName, setFileName] = useState('questions_data');
   const [savedFlags, setSavedFlags] = useState(questions.map(() => true));
+
+  useEffect(() => {
+    localStorage.setItem('questions', JSON.stringify(questions));
+  }, [questions]);
+  
+  useEffect(() => {
+    localStorage.setItem('fileName', fileName);
+  }, [fileName]);
+  
+  useEffect(() => {
+    localStorage.setItem('activeTab', activeTab);
+  }, [activeTab]);
 
   const handleDataLoad = (newQuestions, uploadedFileName) => {
     setQuestions(newQuestions);
@@ -26,7 +47,7 @@ const App = () => {
   return (
     <div className="app-container">
       <header className="header">
-        <h1>クイズアプリ</h1>
+        <h1 onClick={() => {localStorage.clear(); window.location.reload();}}>クイズアプリ</h1>
         <button className="hamburger-icon" onClick={toggleSidebar}>
           &#9776;
         </button>
