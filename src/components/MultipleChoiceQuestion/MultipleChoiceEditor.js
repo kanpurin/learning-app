@@ -212,8 +212,14 @@ const MultipleChoiceEditor = ({ question, setQuestion, setIsSaved }) => {
         question={question}
       />
 
-      <button className="btn btn-primary mt-3" onClick={handleSave}>
+      <button className="btn btn-primary mt-3 me-2" onClick={handleSave}>
         保存
+      </button>
+      <button
+        className="btn btn-secondary mt-3"
+        onClick={() => setUpdatedQuestion(question)}
+      >
+        元に戻す
       </button>
     </div>
   );
