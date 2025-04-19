@@ -13,7 +13,7 @@ const MultipleOrderCreator = ({ questions, setQuestions }) => {
     explanation: '',
     tags: [],
   });
-  
+
   const addTag = () => {
     const newTag = tagInput.trim();
     if (newTag && !question.tags.includes(newTag)) {
@@ -147,7 +147,7 @@ const MultipleOrderCreator = ({ questions, setQuestions }) => {
       </div>
 
       <div 
-        className={`alert mt-3 alert-success`} 
+        className="alert mt-3 alert-success" 
         role="alert" 
         onClick={() => {
           setTempExplanation(question.explanation);

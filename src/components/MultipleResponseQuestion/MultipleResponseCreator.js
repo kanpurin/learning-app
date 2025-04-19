@@ -144,7 +144,7 @@ const MultipleResponseCreator = ({ questions, setQuestions }) => {
       </div>
 
       <div 
-        className={`alert mt-3 alert-success`} 
+        className="alert mt-3 alert-success" 
         role="alert" 
         onClick={() => {
           setTempExplanation(question.explanation);
