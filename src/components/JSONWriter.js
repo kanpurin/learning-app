@@ -22,6 +22,7 @@ const JSONWriter = ({ questions, fileName, setFileName }) => {
       stability: question.stability || '',
       difficulty: question.difficulty || '',
       lastAnsweredDate: question.lastAnsweredDate || '',
+      tags: question.tags || [],
     }));
 
     const json = JSON.stringify(dataToExport, null, 2); // 整形して見やすく
