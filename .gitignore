@@ -24,3 +24,6 @@ yarn-error.log*
 input.csv
 input.json
 nw-gozen2.json
+example.html
+NW.py
+urllist.txt
