@@ -76,7 +76,7 @@ const EditQuestion = ({ questions, setQuestions, savedFlags, setSavedFlags }) =>
               className={`accordion-collapse collapse ${currentQuestionIndex === index && !q.deleted ? 'show' : ''}`}
             >
               <div className="accordion-body">
-                {getQEditor(q, index)}
+                {(currentQuestionIndex === index || !savedFlags[index]) && !q.deleted && getQEditor(q, index)}
                 <div className="text-end mt-3">
                   <button
                     className="btn btn-danger btn-sm"
