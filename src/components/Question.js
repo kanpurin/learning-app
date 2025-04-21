@@ -1,16 +1,14 @@
-import { differenceInDays, isSameDay } from 'date-fns';
 import React, { useState, useEffect } from 'react';
-import { tau, alpha, beta } from '../constants';
-import { initStability, nextStability_f, nextStability_r, nextStability_short, initDifficulty, nextDifficulty } from '../utils';
 import MultipleChoiceQuestion from './MultipleChoiceQuestion/MultipleChoiceQuestion';
 import MultipleResponseQuestion from './MultipleResponseQuestion/MultipleResponseQuestion';
 import OrderingQuestion from './OrderingQuestion/OrderingQuestion';
+import { fsrs, generatorParameters } from 'ts-fsrs';
 
 const Question = ({ questions, setQuestions }) => {
 	const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 	const [isCorrect, setIsCorrect] = useState(false);
 	const [isAnswered, setIsAnswered] = useState(false);
-	const [selectedGrade, setSelectedGrade] = useState(null);
+	const [selectedRating, setSelectedRating] = useState(null);
 	const [memoryMode, setMemoryMode] = useState(null); // 'short' or 'long'
 	const [quizStarted, setQuizStarted] = useState(false);
 
@@ -24,38 +22,25 @@ const Question = ({ questions, setQuestions }) => {
 	}, [questions]);
 
 	const selectNextQuestionIndex = () => {
-		let totalWeight = 0;
-		let weights = questions.map((q, index) => {
-			// recallの計算
-			const now = new Date();
-			const lastAnsweredDate = new Date(q.lastAnsweredDate);
-			const daysElapsed = differenceInDays(now, lastAnsweredDate);
-			const decay = -0.5;
-			const factor = 19 / 81;
-			const recall = Math.pow(1 + factor * daysElapsed / q.stability, decay);
-	
-			// memoryModeがlongの場合、recallが0.9未満の問題だけを対象
-			if (memoryMode === 'long' && recall >= 0.9) {
-				return null; // recallが0.9以上ならスキップ
+		const now = new Date();
+		const unseenIndexes = questions
+			.map((q, i) => (q.card.reps === 0 ? i : -1))
+			.filter(i => i !== -1);
+		if (unseenIndexes.length > 0) {
+			return unseenIndexes[Math.floor(Math.random() * unseenIndexes.length)];
+		}
+		else {
+			const dueIndexes = questions
+				.map((q, i) => (new Date(q.card.due) <= now ? i : -1))
+				.filter(i => i !== -1);
+			if (dueIndexes.length > 0) {
+				return dueIndexes[Math.floor(Math.random() * dueIndexes.length)];
 			}
-	
-			let D = 1 - Math.exp(-q.gap / tau);
-			let W = q.priority * D;
-			totalWeight += W;
-			return { index, weight: W };
-		}).filter(weight => weight !== null); // nullをフィルタリング
-	
-		// 重みを元に次の問題を選ぶ
-		let rand = Math.random() * totalWeight;
-		let sum = 0;
-		for (let { index, weight } of weights) {
-			sum += weight;
-			if (rand <= sum) {
-				return index;
+			else {
+				return null;
 			}
 		}
-		return null; // 念のため最後の要素
-	};
+	}
 
 	const setNextQuestionIndex = () => {
 		setQuestions(prevQuestions => prevQuestions.filter(q => !q.deleted));
@@ -70,60 +55,25 @@ const Question = ({ questions, setQuestions }) => {
 
 	// 学習履歴を更新
 	useEffect(() => {
-		if (isAnswered && selectedGrade) {
-			setQuestions((prevQuestions) => {
-				return prevQuestions.map((q, index) => {
-					if (index === currentQuestionIndex) {
-						const newAttempts = q.attempts + 1;
-						const newCorrectCount = isCorrect ? q.correctCount + 1 : q.correctCount;
-						const newPriority = q.priority * (isCorrect ? 1 - alpha : 1 + beta);
-						const grade = isCorrect ? selectedGrade : 1; // 1-4(間違えたら1)
-
-						let newStability, newDifficulty;
-						const now = new Date();
-
-						if (q.lastAnsweredDate === null) {
-							newStability = initStability(grade);
-							newDifficulty = initDifficulty(grade);
-						}
-						else {
-							const lastDate = new Date(q.lastAnsweredDate);
-							const daysElapsed = differenceInDays(now, lastDate);
-							const recall = 1 / (1 + daysElapsed / (9 * q.stability));
-				
-							if (isSameDay(now, lastDate)) {
-								newStability = nextStability_short(q.stability, grade);
-							} else if (isCorrect) {
-								newStability = nextStability_r(q.difficulty, q.stability, recall, grade);
-							} else {
-								newStability = nextStability_f(q.difficulty, q.stability, recall);
-							}
-				
-							newDifficulty = nextDifficulty(q.difficulty, grade);
-						}
-						return {
-							...q,
-							attempts: newAttempts,
-							correctCount: newCorrectCount,
-							priority: newPriority,
-							gap: 0,
-							stability: newStability,
-							difficulty: newDifficulty,
-							lastAnsweredDate: now.toISOString()
-						};
-					}
-					else {
-						const newGap = q.gap + 1;
-						return {
-							...q,
-							gap: newGap
-						};
-					}
-				});
+		if (isAnswered && selectedRating) {
+			const params = generatorParameters({ 
+				enable_short_term: memoryMode === 'short', 
+				maximum_interval: 30*3
+			});
+			const f = fsrs(params);
+			setQuestions(prevQuestions => {
+				const newQuestions = [...prevQuestions];
+				const item = f.next(newQuestions[currentQuestionIndex].card, new Date(), selectedRating);
+				console.log(item.log);
+				newQuestions[currentQuestionIndex] = {
+					...newQuestions[currentQuestionIndex],
+					card: item.card
+				}
+				return newQuestions;
 			});
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [isAnswered, selectedGrade]);
+	}, [isAnswered, selectedRating]);
 
 	const Qtype = {
 		mcq: MultipleChoiceQuestion,
@@ -174,8 +124,8 @@ const Question = ({ questions, setQuestions }) => {
 							setNextQuestionIndex={setNextQuestionIndex}
 							isAnswered={isAnswered}
 							setIsAnswered={setIsAnswered}
-							selectedGrade={selectedGrade}
-							setSelectedGrade={setSelectedGrade}
+							selectedRating={selectedRating}
+							setSelectedRating={setSelectedRating}
 							memoryMode={memoryMode}
 						/>
 					</div>

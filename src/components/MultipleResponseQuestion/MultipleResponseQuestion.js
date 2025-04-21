@@ -4,9 +4,10 @@ import AnswerFeedback from '../AnswerFeedback';
 import AnswerButton from '../AnswerButton';
 import NextQuestionButton from '../NextQuestionButton';
 import MarkdownArea from '../MarkdownArea';
-import GradeButton from '../GradeButton';
+import RatingButton from '../RatingButton';
+import { Rating } from 'ts-fsrs';
 
-const MultipleResponseQuestion = ({ question, isCorrect, setIsCorrect, setNextQuestionIndex, isAnswered, setIsAnswered, selectedGrade, setSelectedGrade, memoryMode }) => {
+const MultipleResponseQuestion = ({ question, isCorrect, setIsCorrect, setNextQuestionIndex, isAnswered, setIsAnswered, selectedRating, setSelectedRating, memoryMode }) => {
   const [selectedIndices, setSelectedIndices] = useState([]);
 
   const correctIndices = question.answer
@@ -33,7 +34,7 @@ const MultipleResponseQuestion = ({ question, isCorrect, setIsCorrect, setNextQu
     setSelectedIndices([]);
     setIsAnswered(false);
     setIsCorrect(false);
-    setSelectedGrade(null);
+    setSelectedRating(null);
     setNextQuestionIndex();
   };
 
@@ -42,7 +43,7 @@ const MultipleResponseQuestion = ({ question, isCorrect, setIsCorrect, setNextQu
     setIsAnswered(true);
     const correct = checkAnswer(selectedIndices);
     setIsCorrect(correct);
-    setSelectedGrade(correct ? (memoryMode === 'short' ? 2 : null) : 1);
+    setSelectedRating(correct ? null : Rating.Again);
   }
 
   return (
@@ -71,12 +72,12 @@ const MultipleResponseQuestion = ({ question, isCorrect, setIsCorrect, setNextQu
       <AnswerFeedback explanation={question.explanation} isAnswered={isAnswered} isCorrect={isCorrect} />
       
       {/* 難易度評価ボタン */}
-      { isAnswered && memoryMode ==='long' && <GradeButton selectedGrade={selectedGrade} setSelectedGrade={setSelectedGrade} /> }
+      { isAnswered && <RatingButton selectedRating={selectedRating} setSelectedRating={setSelectedRating} /> }
 
       {/* ボタン（回答 & 次の問題） */}
       <div className="d-flex justify-content-center gap-3 mt-4">
         <AnswerButton handleAnswer={handleAnswer} disabled={isAnswered || selectedIndices.length === 0} />
-        <NextQuestionButton onNext={handleNextQuestion} disabled={!isAnswered || !selectedGrade} />
+        <NextQuestionButton onNext={handleNextQuestion} disabled={!isAnswered || !selectedRating} />
       </div>
     </div>
   );

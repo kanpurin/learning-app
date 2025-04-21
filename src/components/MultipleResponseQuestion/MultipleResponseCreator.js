@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import MarkdownArea from '../MarkdownArea';
 import TextEditModal from '../TextEditModal';
 import AnswerMRQ from './AnswerMRQ';
+import { createEmptyCard } from 'ts-fsrs';
 
 const MultipleResponseCreator = ({ questions, setQuestions }) => {
   const [tagInput, setTagInput] = useState('');
@@ -59,14 +60,8 @@ const MultipleResponseCreator = ({ questions, setQuestions }) => {
       ...question,
       options: filledOptions,
       type: 'mrq',
-      attempts: 0,
-      correctCount: 0,
-      priority: 1.0,
-      gap: 100,
       deleted: false,
-      stability: null,
-      difficulty: null,
-      lastAnsweredDate: null,
+      card: createEmptyCard()
     };
 
     setQuestions([...questions, newQuestion]);

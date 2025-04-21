@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import GoogleDriveReader from './GoogleDriveReader';
+import { createEmptyCard } from "ts-fsrs";
 
 const JSONReader = ({ onDataLoad, questions }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -35,17 +36,11 @@ const JSONReader = ({ onDataLoad, questions }) => {
       options: item.options,
       answer: item.answer,
       explanation: item.explanation,
-      attempts: parseInt(item.attempts, 10),
-      correctCount: parseInt(item.correctCount, 10),
-      priority: parseFloat(item.priority),
-      gap: parseInt(item.gap, 10),
       type: item.type,
       summary: item.summary || '',
       deleted: false,
-      stability: item.stability || null,
-      difficulty: item.difficulty || null,
-      lastAnsweredDate: item.lastAnsweredDate || null,
       tags: item.tags || [],
+      card: item.card || createEmptyCard()
     }));
 
     onDataLoad(newQuestions, fileName);

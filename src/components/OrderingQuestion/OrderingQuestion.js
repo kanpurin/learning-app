@@ -4,9 +4,10 @@ import AnswerFeedback from '../AnswerFeedback';
 import AnswerButton from '../AnswerButton';
 import NextQuestionButton from '../NextQuestionButton';
 import MarkdownArea from '../MarkdownArea';
-import GradeButton from '../GradeButton';
+import RatingButton from '../RatingButton';
+import { Rating } from 'ts-fsrs';
 
-const OrderingQuestion = ({ question, isCorrect, setIsCorrect, setNextQuestionIndex, isAnswered, setIsAnswered, selectedGrade, setSelectedGrade, memoryMode }) => {
+const OrderingQuestion = ({ question, isCorrect, setIsCorrect, setNextQuestionIndex, isAnswered, setIsAnswered, selectedRating, setSelectedRating, memoryMode }) => {
   const [selectedOptions, setSelectedOptions] = useState([]);
 
   const correctOrder = question.answer;
@@ -30,7 +31,7 @@ const OrderingQuestion = ({ question, isCorrect, setIsCorrect, setNextQuestionIn
     setIsAnswered(true);
     const correct = JSON.stringify(selectedOptions) === JSON.stringify(correctOrder);
     setIsCorrect(correct);
-    setSelectedGrade(correct ? (memoryMode === 'short' ? 2 : null) : 1);
+    setSelectedRating(correct ? null : Rating.Again);
   };
 
   return (
@@ -60,12 +61,12 @@ const OrderingQuestion = ({ question, isCorrect, setIsCorrect, setNextQuestionIn
       <AnswerFeedback explanation={question.explanation} isAnswered={isAnswered} isCorrect={isCorrect} />
 
       {/* 難易度評価ボタン */}
-      { isAnswered && memoryMode ==='long' && <GradeButton selectedGrade={selectedGrade} setSelectedGrade={setSelectedGrade} /> }
+      { isAnswered && <RatingButton selectedRating={selectedRating} setSelectedRating={setSelectedRating} /> }
 
       {/* ボタン（回答 & 次の問題） */}
       <div className="d-flex justify-content-center gap-3 mt-4">
         <AnswerButton handleAnswer={handleAnswer} disabled={isAnswered || selectedOptions.length === 0} />
-        <NextQuestionButton onNext={handleNextQuestion} disabled={!isAnswered || !selectedGrade} />
+        <NextQuestionButton onNext={handleNextQuestion} disabled={!isAnswered || !selectedRating} />
       </div>
     </div>
   );

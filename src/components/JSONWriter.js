@@ -1,5 +1,6 @@
 import React from 'react';
 import GoogleDriveWriter from './GoogleDriveWriter';
+import { createEmptyCard } from 'ts-fsrs';
 
 // 学習履歴JSONを保存するコンポーネント
 const JSONWriter = ({ questions, fileName, setFileName }) => {
@@ -8,21 +9,17 @@ const JSONWriter = ({ questions, fileName, setFileName }) => {
   };
 
   const handleDownload = () => {
-    const dataToExport = questions.map((question) => ({
+    const dataToExport = questions
+      .filter((question) => !question.deleted)
+      .map((question) => ({
       problem: question.problem,
       options: question.options,
       answer: question.answer,
       explanation: question.explanation || '',
-      attempts: question.attempts,
-      correctCount: question.correctCount,
-      priority: question.priority,
-      gap: question.gap,
       type: question.type,
       summary: question.summary || '',
-      stability: question.stability || '',
-      difficulty: question.difficulty || '',
-      lastAnsweredDate: question.lastAnsweredDate || '',
       tags: question.tags || [],
+      card: question.card || createEmptyCard()
     }));
 
     const json = JSON.stringify(dataToExport, null, 2); // 整形して見やすく
