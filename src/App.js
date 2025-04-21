@@ -48,7 +48,7 @@ const App = () => {
     setSavedFlags(newQuestions.map(() => true));
     setIsSidebarOpen(false);
   };
-  
+
   const handleTabChange = (tab) => {
     if (tab === 'quiz' && savedFlags.some(f => !f)) {
       alert('保存されていない問題があります。問題を解く前に保存してください。');
@@ -102,20 +102,24 @@ const App = () => {
           </ul>
         </nav>
 
-        {activeTab === 'quiz' && questions?.length > 0 && (
-          <Question questions={questions} setQuestions={setQuestions} />
-        )}
-        {activeTab === 'create' && (
+        <div style={{ display: activeTab === 'quiz' ? 'block' : 'none' }}>
+          {questions?.length > 0 && (
+            <Question questions={questions} setQuestions={setQuestions} />
+          )}
+        </div>
+        <div style={{ display: activeTab === 'create' ? 'block' : 'none' }}>
           <CreateQuestion questions={questions} setQuestions={setQuestions} />
-        )}
-        {activeTab === 'edit' && questions?.length > 0 && (
-          <EditQuestion
-            questions={questions}
-            setQuestions={setQuestions}
-            savedFlags={savedFlags}
-            setSavedFlags={setSavedFlags}
-          />
-        )}
+        </div>
+        <div style={{ display: activeTab === 'edit' ? 'block' : 'none' }}>
+          {questions?.length > 0 && (
+            <EditQuestion
+              questions={questions}
+              setQuestions={setQuestions}
+              savedFlags={savedFlags}
+              setSavedFlags={setSavedFlags}
+            />
+          )}
+        </div>
       </main>
     </div>
   );
