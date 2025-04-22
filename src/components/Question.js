@@ -117,6 +117,7 @@ const Question = ({ questions, setQuestions }) => {
 			{quizStarted && currentQuestionIndex !== null && (
 				<div className="container mt-4">
 					<div className="card p-4 shadow-sm">
+						<h5 className="text-center mb-4">問題 {currentQuestionIndex + 1} / {questions.length}</h5>
 						<Qtype
 							question={currentQuestion}
 							isCorrect={isCorrect}

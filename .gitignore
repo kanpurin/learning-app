@@ -23,6 +23,7 @@ yarn-debug.log*
 yarn-error.log*
 input.csv
 input.json
+nw-gozen1.json
 nw-gozen2.json
 example.html
 NW.py

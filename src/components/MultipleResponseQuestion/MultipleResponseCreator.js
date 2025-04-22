@@ -51,10 +51,6 @@ const MultipleResponseCreator = ({ questions, setQuestions }) => {
       alert('正解の選択肢を選んでください');
       return;
     }
-    if (question.options.some((option) => option.trim() === '')) {
-      alert('選択肢に空欄が含まれています。すべての選択肢を入力してください');
-      return;
-    }
 
     const newQuestion = {
       ...question,
