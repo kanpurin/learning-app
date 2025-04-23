@@ -50,6 +50,7 @@ const App = () => {
   };
 
   const handleTabChange = (tab) => {
+		setQuestions(prevQuestions => prevQuestions.filter(q => !q.deleted));
     if (tab === 'quiz' && savedFlags.some(f => !f)) {
       alert('保存されていない問題があります。問題を解く前に保存してください。');
       return;

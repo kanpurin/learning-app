@@ -3,6 +3,7 @@ import MultipleChoiceQuestion from './MultipleChoiceQuestion/MultipleChoiceQuest
 import MultipleResponseQuestion from './MultipleResponseQuestion/MultipleResponseQuestion';
 import OrderingQuestion from './OrderingQuestion/OrderingQuestion';
 import { fsrs, generatorParameters } from 'ts-fsrs';
+import TagSelector from './TagSelector';
 
 const Question = ({ questions, setQuestions }) => {
 	const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -11,11 +12,12 @@ const Question = ({ questions, setQuestions }) => {
 	const [selectedRating, setSelectedRating] = useState(null);
 	const [memoryMode, setMemoryMode] = useState(null); // 'short' or 'long'
 	const [quizStarted, setQuizStarted] = useState(false);
+	const [selectedTags, setSelectedTags] = useState([]);
 
 	const currentQuestion = currentQuestionIndex !== null ? questions[currentQuestionIndex] : null;
 
 	useEffect(() => {
-		if (currentQuestionIndex === null && selectNextQuestionIndex() !== null) {
+		if (currentQuestionIndex == null && selectNextQuestionIndex() !== null) {
 			setNextQuestionIndex();
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -24,14 +26,22 @@ const Question = ({ questions, setQuestions }) => {
 	const selectNextQuestionIndex = () => {
 		const now = new Date();
 		const unseenIndexes = questions
-			.map((q, i) => (q.card.reps === 0 ? i : -1))
+			.map((q, i) => {
+				const tagMatch = selectedTags.length === 0 || selectedTags.some(tag => q.tags?.includes(tag));
+				if (!tagMatch) return -1;
+				return q.card.reps === 0 ? i : -1;
+			})
 			.filter(i => i !== -1);
 		if (unseenIndexes.length > 0) {
 			return unseenIndexes[Math.floor(Math.random() * unseenIndexes.length)];
 		}
 		else {
 			const dueIndexes = questions
-				.map((q, i) => (new Date(q.card.due) <= now ? i : -1))
+				.map((q, i) => {
+					const tagMatch = selectedTags.length === 0 || selectedTags.some(tag => q.tags?.includes(tag));
+					if (!tagMatch) return -1;
+					return new Date(q.card.due) <= now ? i : -1
+				})
 				.filter(i => i !== -1);
 			if (dueIndexes.length > 0) {
 				return dueIndexes[Math.floor(Math.random() * dueIndexes.length)];
@@ -43,7 +53,6 @@ const Question = ({ questions, setQuestions }) => {
 	}
 
 	const setNextQuestionIndex = () => {
-		setQuestions(prevQuestions => prevQuestions.filter(q => !q.deleted));
 		const nextIndex = selectNextQuestionIndex();
 		setCurrentQuestionIndex(nextIndex);
 	}
@@ -79,34 +88,46 @@ const Question = ({ questions, setQuestions }) => {
 		mcq: MultipleChoiceQuestion,
 		mrq: MultipleResponseQuestion,
 		order: OrderingQuestion
-	}[currentQuestion === null ? null : currentQuestion.type] || MultipleChoiceQuestion;
+	}[currentQuestion == null ? null : currentQuestion.type] || MultipleChoiceQuestion;
 
   return (
 		<div>
 			{!quizStarted && (
-				<div className="text-center mt-4">
-					<p className="mb-3">記憶モードを選んでください</p>
-					<div className="d-flex justify-content-center gap-3 mb-3">
+				<div className="container mt-4">
+					<div className='card p-4 shadow-sm mb-4'>
+						<p className="text-center mb-3">記憶モードを選んでください</p>
+						<div className="d-flex justify-content-center gap-3 mb-3">
+							<button
+								className={`btn ${memoryMode === 'short' ? 'btn-success' : 'btn-outline-success'}`}
+								onClick={() => setMemoryMode('short')}
+							>
+								短期記憶
+							</button>
+							<button
+								className={`btn ${memoryMode === 'long' ? 'btn-primary' : 'btn-outline-primary'}`}
+								onClick={() => setMemoryMode('long')}
+							>
+								長期記憶
+							</button>
+						</div>
+
+						<div className="mb-4">
+							<p>出題するタグを選んでください（OR条件）</p>
+							<TagSelector 
+								selectedTags={selectedTags} 
+								setSelectedTags={setSelectedTags} 
+								allTags={Array.from(new Set(questions.flatMap(q => q.tags)))}
+							/>
+						</div>
+
 						<button
-							className={`btn ${memoryMode === 'short' ? 'btn-success' : 'btn-outline-success'}`}
-							onClick={() => setMemoryMode('short')}
+							className="btn btn-dark"
+							onClick={startQuiz}
+							disabled={!memoryMode}
 						>
-							短期記憶
-						</button>
-						<button
-							className={`btn ${memoryMode === 'long' ? 'btn-primary' : 'btn-outline-primary'}`}
-							onClick={() => setMemoryMode('long')}
-						>
-							長期記憶
+							クイズを開始
 						</button>
 					</div>
-					<button
-						className="btn btn-dark"
-						onClick={startQuiz}
-						disabled={!memoryMode}
-					>
-						クイズを開始
-					</button>
 				</div>
 			)}
 			{quizStarted && currentQuestionIndex === null && (
