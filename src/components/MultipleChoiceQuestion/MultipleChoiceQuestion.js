@@ -44,18 +44,20 @@ const MultipleChoiceQuestion = ({ question, optionOrder, isCorrect, setIsCorrect
 
       {/* 選択肢 */}
       <div className="list-group">
-        {optionOrder.map((index, i) => {
-          const optionIndex = index + 1;
-          return (
-            <AnswerMCQ
-              key={i}
-              option={question.options[index]}
-              optionIndex={optionIndex}
-              checked={selectedIndex === optionIndex}
-              onChange={handleChange}
-              disabled={isAnswered}
-            />
-          );
+        {(question.random 
+          ? optionOrder 
+          : question.options.map((_, i) => i)).map((index, i) => {
+            const optionIndex = index + 1;
+            return (
+              <AnswerMCQ
+                key={i}
+                option={question.options[index]}
+                optionIndex={optionIndex}
+                checked={selectedIndex === optionIndex}
+                onChange={handleChange}
+                disabled={isAnswered}
+              />
+            );
         })}
       </div>
 

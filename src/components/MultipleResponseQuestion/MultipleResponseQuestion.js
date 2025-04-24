@@ -53,18 +53,20 @@ const MultipleResponseQuestion = ({ question, optionOrder, isCorrect, setIsCorre
 
       {/* 選択肢 */}
       <div className="list-group">
-        {optionOrder.map((index, i) => {
-          const optionIndex = index + 1;
-          return (
-            <AnswerMRQ
-              key={i}
-              option={question.options[index]}
-              optionIndex={optionIndex}
-              checked={selectedIndices.includes(optionIndex)}
-              onChange={handleChange}
-              disabled={isAnswered}
-            />
-          );
+        {(question.random 
+          ? optionOrder 
+          : question.options.map((_, i) => i)).map((index, i) => {
+            const optionIndex = index + 1;
+            return (
+              <AnswerMRQ
+                key={i}
+                option={question.options[index]}
+                optionIndex={optionIndex}
+                checked={selectedIndices.includes(optionIndex)}
+                onChange={handleChange}
+                disabled={isAnswered}
+              />
+            );
         })}
       </div>
 

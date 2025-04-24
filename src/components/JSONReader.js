@@ -40,7 +40,8 @@ const JSONReader = ({ onDataLoad, questions }) => {
       summary: item.summary || '',
       deleted: false,
       tags: item.tags || [],
-      card: item.card || createEmptyCard()
+      card: item.card || createEmptyCard(),
+      random: item.random || false,
     }));
 
     onDataLoad(newQuestions, fileName);

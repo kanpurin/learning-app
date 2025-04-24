@@ -19,7 +19,8 @@ const JSONWriter = ({ questions, fileName, setFileName }) => {
       type: question.type,
       summary: question.summary || '',
       tags: question.tags || [],
-      card: question.card || createEmptyCard()
+      card: question.card || createEmptyCard(),
+      random: question.random || false,
     }));
 
     const json = JSON.stringify(dataToExport, null, 2); // 整形して見やすく

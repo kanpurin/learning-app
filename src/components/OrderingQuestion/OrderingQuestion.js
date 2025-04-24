@@ -41,19 +41,21 @@ const OrderingQuestion = ({ question, optionOrder, isCorrect, setIsCorrect, setN
       
       {/* 選択肢 */}
       <div className="list-group">
-        {optionOrder.map((index, i) => {
-          const optionIndex = index + 1;
-          const selectedIndex = selectedOptions.indexOf(optionIndex) + 1;
-          return (
-            <AnswerOrder
-              key={i}
-              option={question.options[index]}
-              optionIndex={optionIndex}
-              selectedIndex={selectedIndex}
-              onChange={() => handleSelect(optionIndex)}
-              disabled={isAnswered}
-            />
-          )
+        {(question.random 
+          ? optionOrder 
+          : question.options.map((_, i) => i)).map((index, i) => {
+            const optionIndex = index + 1;
+            const selectedIndex = selectedOptions.indexOf(optionIndex) + 1;
+            return (
+              <AnswerOrder
+                key={i}
+                option={question.options[index]}
+                optionIndex={optionIndex}
+                selectedIndex={selectedIndex}
+                onChange={() => handleSelect(optionIndex)}
+                disabled={isAnswered}
+              />
+            );
       })}
       </div>
       

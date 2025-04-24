@@ -57,7 +57,8 @@ const MultipleResponseCreator = ({ questions, setQuestions }) => {
       options: filledOptions,
       type: 'mrq',
       deleted: false,
-      card: createEmptyCard()
+      card: createEmptyCard(),
+      random: false,
     };
 
     setQuestions([...questions, newQuestion]);

@@ -57,7 +57,8 @@ const MultipleOrderCreator = ({ questions, setQuestions }) => {
       options: filledOptions,
       type: 'order',
       deleted: false,
-      card: createEmptyCard()
+      card: createEmptyCard(),
+      random: false,
     };
 
     setQuestions([...questions, newQuestion]);
