@@ -7,7 +7,7 @@ import MarkdownArea from '../MarkdownArea';
 import RatingButton from '../RatingButton';
 import { Rating } from 'ts-fsrs';
 
-const MultipleResponseQuestion = ({ question, isCorrect, setIsCorrect, setNextQuestionIndex, isAnswered, setIsAnswered, selectedRating, setSelectedRating, memoryMode }) => {
+const MultipleResponseQuestion = ({ question, optionOrder, isCorrect, setIsCorrect, setNextQuestionIndex, isAnswered, setIsAnswered, selectedRating, setSelectedRating, memoryMode }) => {
   const [selectedIndices, setSelectedIndices] = useState([]);
 
   const correctIndices = question.answer
@@ -53,12 +53,12 @@ const MultipleResponseQuestion = ({ question, isCorrect, setIsCorrect, setNextQu
 
       {/* 選択肢 */}
       <div className="list-group">
-        {question.options.map((option, index) => {
+        {optionOrder.map((index, i) => {
           const optionIndex = index + 1;
           return (
             <AnswerMRQ
-              key={index}
-              option={option}
+              key={i}
+              option={question.options[index]}
               optionIndex={optionIndex}
               checked={selectedIndices.includes(optionIndex)}
               onChange={handleChange}
@@ -72,12 +72,12 @@ const MultipleResponseQuestion = ({ question, isCorrect, setIsCorrect, setNextQu
       <AnswerFeedback explanation={question.explanation} isAnswered={isAnswered} isCorrect={isCorrect} />
       
       {/* 難易度評価ボタン */}
-      { isAnswered && <RatingButton selectedRating={selectedRating} setSelectedRating={setSelectedRating} /> }
+      { memoryMode !== 'infinite' && isAnswered && <RatingButton selectedRating={selectedRating} setSelectedRating={setSelectedRating} /> }
 
       {/* ボタン（回答 & 次の問題） */}
       <div className="d-flex justify-content-center gap-3 mt-4">
         <AnswerButton handleAnswer={handleAnswer} disabled={isAnswered || selectedIndices.length === 0} />
-        <NextQuestionButton onNext={handleNextQuestion} disabled={!isAnswered || !selectedRating} />
+        <NextQuestionButton onNext={handleNextQuestion} disabled={!isAnswered || (!selectedRating && memoryMode !== 'infinite')} />
       </div>
     </div>
   );

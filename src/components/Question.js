@@ -13,6 +13,7 @@ const Question = ({ questions, setQuestions }) => {
 	const [memoryMode, setMemoryMode] = useState(null); // 'short' or 'long'
 	const [quizStarted, setQuizStarted] = useState(false);
 	const [selectedTags, setSelectedTags] = useState([]);
+	const [optionOrder, setOptionOrder] = useState([]);
 
 	const currentQuestion = currentQuestionIndex !== null ? questions[currentQuestionIndex] : null;
 
@@ -24,37 +25,47 @@ const Question = ({ questions, setQuestions }) => {
 	}, [questions]);
 
 	const selectNextQuestionIndex = () => {
-		const now = new Date();
-		const unseenIndexes = questions
-			.map((q, i) => {
-				const tagMatch = selectedTags.length === 0 || selectedTags.some(tag => q.tags?.includes(tag));
-				if (!tagMatch) return -1;
-				return q.card.reps === 0 ? i : -1;
-			})
-			.filter(i => i !== -1);
-		if (unseenIndexes.length > 0) {
-			return unseenIndexes[Math.floor(Math.random() * unseenIndexes.length)];
-		}
-		else {
-			const dueIndexes = questions
+		if (questions.length === 0) return null;
+		if (memoryMode !== 'infinite') {
+			const now = new Date();
+			const unseenIndexes = questions
 				.map((q, i) => {
 					const tagMatch = selectedTags.length === 0 || selectedTags.some(tag => q.tags?.includes(tag));
 					if (!tagMatch) return -1;
-					return new Date(q.card.due) <= now ? i : -1
+					return q.card.reps === 0 ? i : -1;
 				})
 				.filter(i => i !== -1);
-			if (dueIndexes.length > 0) {
-				return dueIndexes[Math.floor(Math.random() * dueIndexes.length)];
+			if (unseenIndexes.length > 0) {
+				return unseenIndexes[Math.floor(Math.random() * unseenIndexes.length)];
 			}
 			else {
-				return null;
+				const dueIndexes = questions
+					.map((q, i) => {
+						const tagMatch = selectedTags.length === 0 || selectedTags.some(tag => q.tags?.includes(tag));
+						if (!tagMatch) return -1;
+						return new Date(q.card.due) <= now ? i : -1
+					})
+					.filter(i => i !== -1);
+				if (dueIndexes.length > 0) {
+					return dueIndexes[Math.floor(Math.random() * dueIndexes.length)];
+				}
+				else {
+					return null;
+				}
 			}
+		}
+		else {
+			// すべての問題からランダムに1問選ぶ
+			return Math.floor(Math.random() * questions.length);
 		}
 	}
 
 	const setNextQuestionIndex = () => {
 		const nextIndex = selectNextQuestionIndex();
 		setCurrentQuestionIndex(nextIndex);
+		if (questions[nextIndex]?.random === true) {
+			setOptionOrder(questions[nextIndex].options.map((_, i) => i).sort(() => Math.random() - 0.5));
+		}
 	}
 
 	const startQuiz = () => {
@@ -64,7 +75,7 @@ const Question = ({ questions, setQuestions }) => {
 
 	// 学習履歴を更新
 	useEffect(() => {
-		if (isAnswered && selectedRating) {
+		if (isAnswered && selectedRating && memoryMode !== 'infinite') {
 			const params = generatorParameters({ 
 				enable_short_term: memoryMode === 'short', 
 				maximum_interval: 30*3
@@ -97,6 +108,12 @@ const Question = ({ questions, setQuestions }) => {
 					<div className='card p-4 shadow-sm mb-4'>
 						<p className="text-center mb-3">記憶モードを選んでください</p>
 						<div className="d-flex justify-content-center gap-3 mb-3">
+							<button
+								className={`btn ${memoryMode === 'infinite' ? 'btn-secondary' : 'btn-outline-secondary'}`}
+								onClick={() => setMemoryMode('infinite')}
+							>
+								無限
+							</button>
 							<button
 								className={`btn ${memoryMode === 'short' ? 'btn-success' : 'btn-outline-success'}`}
 								onClick={() => setMemoryMode('short')}
@@ -141,6 +158,7 @@ const Question = ({ questions, setQuestions }) => {
 						<h5 className="text-center mb-4">問題 {currentQuestionIndex + 1} / {questions.length}</h5>
 						<Qtype
 							question={currentQuestion}
+							optionOrder={optionOrder}
 							isCorrect={isCorrect}
 							setIsCorrect={setIsCorrect}
 							setNextQuestionIndex={setNextQuestionIndex}
