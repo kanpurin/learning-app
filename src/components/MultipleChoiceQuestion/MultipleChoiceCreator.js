@@ -214,6 +214,19 @@ const MultipleChoiceCreator = ({ questions, setQuestions }) => {
         question={question}
       />
 
+      <div className="form-check mt-3">
+        <input
+          className="form-check-input"
+          type="checkbox"
+          id="shuffleOption"
+          checked={question.random || false}
+          onChange={(e) => setQuestion({ ...question, random: e.target.checked })}
+        />
+        <label className="form-check-label" htmlFor="shuffleOption">
+          選択肢をランダムに並べる
+        </label>
+      </div>
+
       <button className="btn btn-primary mt-3" onClick={handleSave}>
         保存
       </button>
