@@ -57,8 +57,7 @@ const MultipleChoiceCreator = ({ questions, setQuestions }) => {
       options: filledOptions,
       type: 'mcq',
       deleted: false,
-      card: createEmptyCard(),
-      random: false,
+      card: createEmptyCard()
     };
 
     setQuestions([...questions, newQuestion]);
