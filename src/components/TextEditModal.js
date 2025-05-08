@@ -23,11 +23,22 @@ const TextEditModal = ({ show, title, placeholder = "", value, onChange, onClose
   };
 
   const staticTemplates = [
-    { label: '画像テンプレート', value: (
-      `<div align="center">\n` + 
-      `  <img src="https://sample/image.png" style="width: min(300px, 70%);"/>\n` +
-      `</div>\n`
-    ) },
+    { 
+      label: '画像テンプレート', 
+      value: (
+        `<div align="center">\n` + 
+        `  <img src="https://sample/image.png" style="width: min(300px, 70%);"/>\n` +
+        `</div>\n`
+      ) 
+    },
+    { 
+      label: 'インラインコード', 
+      value: '``'
+    },
+    { 
+      label: 'コードブロック', 
+      value: '```bash\n\n```'
+    },
   ];
 
   const dynamicTemplate = generateDynamicTemplate();
