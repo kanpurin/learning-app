@@ -235,8 +235,22 @@ const MultipleResponseCreator = ({ questions, setQuestions }) => {
         </label>
       </div>
 
-      <button className="btn btn-primary mt-3" onClick={handleSave}>
+      <button className="btn btn-primary mt-3 me-2" onClick={handleSave}>
         保存
+      </button>
+
+      <button 
+        className="btn btn-secondary mt-3" 
+        onClick={() => setQuestion({
+          summary: '',
+          problem: '',
+          options: ['', ''],
+          answer: [],
+          explanation: '',
+          tags: [],
+        })
+      }>
+        クリア
       </button>
     </div>
   );
