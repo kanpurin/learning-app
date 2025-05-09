@@ -1,15 +1,22 @@
 import React, { useRef } from 'react';
 import { Modal, Button, Form } from 'react-bootstrap';
+import ClearButton from './ClearButton';
 
 const TextEditModal = ({ show, title, placeholder = "", value, onChange, onClose, onSave, question }) => {
   const textareaRef = useRef(null);
+
+  // テキストエリアの内容をクリア
+  const handleClear = () => {
+    onChange('');
+    textareaRef.current.focus();
+  };
 
   // 解説テンプレートを動的生成
   const generateDynamicTemplate = () => {
     if (!question || !Array.isArray(question.answer) || !Array.isArray(question.options)) return null;
 
     const corrects = question.answer
-      .map((index, i) => {
+      .map((index) => {
         const optionText = question.options[index - 1];
         return optionText ? `- ${optionText}` : null;
       })
@@ -23,42 +30,53 @@ const TextEditModal = ({ show, title, placeholder = "", value, onChange, onClose
   };
 
   const staticTemplates = [
-    { 
-      label: '画像テンプレート', 
+    {
+      label: '画像テンプレート',
       value: (
-        `<div align="center">\n` + 
+        `<div align="center">\n` +
         `  <img src="https://sample/image.png" style="width: min(300px, 70%);"/>\n` +
         `</div>\n`
-      ) 
+      ),
     },
-    { 
-      label: 'インラインコード', 
-      value: '``'
+    {
+      label: 'インラインコードで囲む',
+      value: { start: '`', end: '`' },
     },
-    { 
-      label: 'コードブロック', 
-      value: '```bash\n\n```'
+    {
+      label: 'コードブロックで囲む',
+      value: { start: '```bash\n', end: '\n```' },
     },
   ];
 
   const dynamicTemplate = generateDynamicTemplate();
   const allTemplates = dynamicTemplate ? [dynamicTemplate, ...staticTemplates] : staticTemplates;
 
+  // テンプレート挿入または囲む処理
   const handleInsertTemplate = (e) => {
-    const templateText = e.target.value;
-    if (!templateText || !textareaRef.current) return;
+    const selectedTemplate = allTemplates.find((t) => JSON.stringify(t.value) === e.target.value);
+    if (!selectedTemplate || !textareaRef.current) return;
 
     const textarea = textareaRef.current;
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
-    const before = value.slice(0, start);
-    const after = value.slice(end);
-    const newText = before + templateText + after;
+    const selectedText = value.slice(start, end);
+
+    let newText;
+
+    if (typeof selectedTemplate.value === 'string') {
+      newText = value.slice(0, start) + selectedTemplate.value + value.slice(end);
+    } else {
+      const { start: startStr, end: endStr } = selectedTemplate.value;
+      newText =
+        value.slice(0, start) +
+        startStr + selectedText + endStr +
+        value.slice(end);
+    }
 
     onChange(newText);
 
     setTimeout(() => {
-      const pos = start + templateText.length;
+      const pos = start + (typeof selectedTemplate.value === 'string' ? selectedTemplate.value.length : 2);
       textarea.focus();
       textarea.setSelectionRange(pos, pos);
     }, 0);
@@ -71,21 +89,26 @@ const TextEditModal = ({ show, title, placeholder = "", value, onChange, onClose
       <Modal.Header closeButton>
         <Modal.Title>{title}</Modal.Title>
       </Modal.Header>
-      <Modal.Body>
-        <textarea
-          ref={textareaRef}
-          className="form-control"
-          placeholder={placeholder}
-          rows={4}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-        />
+      <Modal.Body style={{ position: 'relative' }}>
+        {/* クリアボタンをテキストエリア内に表示 */}
+        <div style={{ position: 'relative' }}>
+          <ClearButton onClear={handleClear} />
+          <textarea
+            ref={textareaRef}
+            className="form-control"
+            placeholder={placeholder}
+            rows={4}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            style={{ paddingRight: '40px' }}  // クリアボタン分の余白
+          />
+        </div>
       </Modal.Body>
       <Modal.Footer className="d-flex justify-content-between align-items-center">
-        <Form.Select style={{ maxWidth: '200px' }} onChange={handleInsertTemplate}>
+        <Form.Select style={{ maxWidth: '300px' }} onChange={handleInsertTemplate}>
           <option value="">テンプレートを選択</option>
           {allTemplates.map((t, index) => (
-            <option key={index} value={t.value}>{t.label}</option>
+            <option key={index} value={JSON.stringify(t.value)}>{t.label}</option>
           ))}
         </Form.Select>
         <div>
