@@ -63,7 +63,7 @@ const MultipleResponseEditor = ({ question, setQuestion, setIsSaved }) => {
       <div className="mb-3 border-bottom pb-2">
         <input
           type="text"
-          className="form-control"
+          className="form-control w-full"
           style={{ borderRadius: '0', boxShadow: 'none' }}
           placeholder="問題のタイトル（summary）"
           value={updatedQuestion.summary}

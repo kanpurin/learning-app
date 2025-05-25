@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import MultipleChoiceEditor from './MultipleChoiceQuestion/MultipleChoiceEditor';
 import MultipleResponseEditor from './MultipleResponseQuestion/MultipleResponseEditor';
 import OrderingEditor from './OrderingQuestion/OrderingEditor';
+import WordQuestion from './WordQuestion/WordEditor';
 
 const EditQuestion = ({ questions, setQuestions, savedFlags, setSavedFlags }) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(null);
@@ -35,7 +36,8 @@ const EditQuestion = ({ questions, setQuestions, savedFlags, setSavedFlags }) =>
     const QEditor = {
       mcq: MultipleChoiceEditor,
       mrq: MultipleResponseEditor,
-      order: OrderingEditor
+      order: OrderingEditor,
+		  word: WordQuestion
     }[question.type] || MultipleChoiceEditor;
 
     return (

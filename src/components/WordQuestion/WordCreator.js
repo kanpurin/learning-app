@@ -1,16 +1,14 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import MarkdownArea from '../MarkdownArea';
 import TextEditModal from '../TextEditModal';
-import AnswerOrder from './AnswerOrder';
 import { createEmptyCard } from 'ts-fsrs';
 
-const MultipleOrderCreator = ({ questions, setQuestions }) => {
+const WordCreator = ({ questions, setQuestions }) => {
   const [tagInput, setTagInput] = useState('');
   const [question, setQuestion] = useState({
     summary: '',
     problem: '',
-    options: ['', ''],
-    answer: [],
+    answer: '',
     explanation: '',
     tags: [],
   });
@@ -32,30 +30,20 @@ const MultipleOrderCreator = ({ questions, setQuestions }) => {
 
   const [showProblemModal, setShowProblemModal] = useState(false);
   const [tempProblem, setTempProblem] = useState('');
-
-  const [showOptionModal, setShowOptionModal] = useState(false);
-  const [editingOptionIndex, setEditingOptionIndex] = useState(null);
-  const [tempOption, setTempOption] = useState('');
   
   const [showExplanationModal, setShowExplanationModal] = useState(false);
   const [tempExplanation, setTempExplanation] = useState('');
 
   const handleSave = () => {
-    const filledOptions = question.options.filter((opt) => opt.trim() !== '');
-
-    if (filledOptions.length < 2) {
-      alert('2つ以上の選択肢を入力してください');
-      return;
-    }
-    if (question.answer.length === 0) {
+    if (question.answer === '') {
       alert('正解の選択肢を選んでください');
       return;
     }
 
     const newQuestion = {
       ...question,
-      options: filledOptions,
-      type: 'order',
+      options: null,
+      type: 'word',
       deleted: false,
       card: createEmptyCard(),
       random: false,
@@ -63,10 +51,6 @@ const MultipleOrderCreator = ({ questions, setQuestions }) => {
 
     setQuestions([...questions, newQuestion]);
     alert('問題を保存しました');
-  };
-
-  const addOption = () => {
-    setQuestion({ ...question, options: [...question.options, ''] });
   };
 
   return (
@@ -91,52 +75,18 @@ const MultipleOrderCreator = ({ questions, setQuestions }) => {
         <MarkdownArea text={question.problem || '### 問題文'} />
       </div>
 
-      <div className="list-group">
-        {question.options.map((option, index) => {
-          const optionIndex = index + 1;
-          const selectedIndex = question.answer.indexOf(optionIndex) + 1;
-
-          return (
-            <AnswerOrder
-              key={index}
-              option={option || `選択肢${optionIndex}`}
-              optionIndex={optionIndex}
-              selectedIndex={selectedIndex}
-              onChange={(e) => {
-                const selected = Number(e.target.value);
-                setQuestion((prev) => {
-                  if (prev.answer.includes(selected)) {
-                    return {...prev, answer: prev.answer.filter(index => index !== selected)};
-                  } else {
-                    return {...prev, answer: [...prev.answer, optionIndex]};
-                  }
-                })
-              }}
-              onClick={() => {
-                setEditingOptionIndex(index);
-                setTempOption(option);
-                setShowOptionModal(true);
-              }}
-              onDelete={(deleteIndex) => {
-                const newOptions = question.options.filter((_, i) => i !== deleteIndex);
-                const newAnswer = question.answer
-                  .filter((ans) => ans !== deleteIndex + 1)
-                  .map((ans) => (ans > deleteIndex + 1 ? ans - 1 : ans));
-                setQuestion({ ...question, options: newOptions, answer: newAnswer });
-              }}
-              disabled={!option.trim()}
-            />
-          )
-        })}
-        
-        <button
-          className="list-group-item list-group-item-action text-center text-primary"
-          onClick={addOption}
-        >
-          ＋ 選択肢を追加
-        </button>
+      <div className="mb-2">
+        <input
+          type="text"
+          className="form-control w-full"
+          placeholder={`解答を入力してください`}
+          onChange={(e) => {
+            const newAnswer = e.target.value;
+            setQuestion(prev => ({ ...prev, answer: newAnswer }));
+          }}
+        />
       </div>
-
+        
       <div 
         className="alert mt-3 alert-success" 
         role="alert" 
@@ -197,20 +147,6 @@ const MultipleOrderCreator = ({ questions, setQuestions }) => {
       />
 
       <TextEditModal
-        show={showOptionModal}
-        title={`選択肢 ${editingOptionIndex + 1} の編集`}
-        value={tempOption}
-        onChange={setTempOption}
-        onClose={() => setShowOptionModal(false)}
-        onSave={() => {
-          const newOptions = [...question.options];
-          newOptions[editingOptionIndex] = tempOption;
-          setQuestion({ ...question, options: newOptions });
-          setShowOptionModal(false);
-        }}
-      />
-
-      <TextEditModal
         show={showExplanationModal}
         title="解説文の編集"
         placeholder="解説文"
@@ -224,19 +160,6 @@ const MultipleOrderCreator = ({ questions, setQuestions }) => {
         question={question}
       />
 
-      <div className="form-check mt-3">
-        <input
-          className="form-check-input"
-          type="checkbox"
-          id="shuffleOption"
-          checked={question.random || false}
-          onChange={(e) => setQuestion({ ...question, random: e.target.checked })}
-        />
-        <label className="form-check-label" htmlFor="shuffleOption">
-          選択肢をランダムに並べる
-        </label>
-      </div>
-
       <button className="btn btn-primary mt-3 me-2" onClick={handleSave}>
         保存
       </button>
@@ -246,8 +169,7 @@ const MultipleOrderCreator = ({ questions, setQuestions }) => {
         onClick={() => setQuestion({
           summary: '',
           problem: '',
-          options: ['', ''],
-          answer: [],
+          answer: '',
           explanation: '',
           tags: [],
         })
@@ -258,4 +180,4 @@ const MultipleOrderCreator = ({ questions, setQuestions }) => {
   );
 };
 
-export default MultipleOrderCreator;
+export default WordCreator;

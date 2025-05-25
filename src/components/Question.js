@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import MultipleChoiceQuestion from './MultipleChoiceQuestion/MultipleChoiceQuestion';
 import MultipleResponseQuestion from './MultipleResponseQuestion/MultipleResponseQuestion';
 import OrderingQuestion from './OrderingQuestion/OrderingQuestion';
+import WordQuestion from './WordQuestion/WordQuestion';
 import { fsrs, generatorParameters } from 'ts-fsrs';
 import TagSelector from './TagSelector';
 
@@ -98,7 +99,8 @@ const Question = ({ questions, setQuestions }) => {
 	const Qtype = {
 		mcq: MultipleChoiceQuestion,
 		mrq: MultipleResponseQuestion,
-		order: OrderingQuestion
+		order: OrderingQuestion,
+		word: WordQuestion
 	}[currentQuestion == null ? null : currentQuestion.type] || MultipleChoiceQuestion;
 
   return (

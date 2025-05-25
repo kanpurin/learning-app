@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import MarkdownArea from '../MarkdownArea';
 import TextEditModal from '../TextEditModal';
-import AnswerOrder from './AnswerOrder';
 
-const MultipleOrderCreator = ({ question, setQuestion, setIsSaved }) => {
+const WordCreator = ({ question, setQuestion, setIsSaved }) => {
   const [updatedQuestion, setUpdatedQuestion] = useState(question);
     const [tagInput, setTagInput] = useState('');
 
@@ -29,22 +28,12 @@ const MultipleOrderCreator = ({ question, setQuestion, setIsSaved }) => {
 
   const [showProblemModal, setShowProblemModal] = useState(false);
   const [tempProblem, setTempProblem] = useState('');
-
-  const [showOptionModal, setShowOptionModal] = useState(false);
-  const [editingOptionIndex, setEditingOptionIndex] = useState(null);
-  const [tempOption, setTempOption] = useState('');
   
   const [showExplanationModal, setShowExplanationModal] = useState(false);
   const [tempExplanation, setTempExplanation] = useState('');
 
   const handleSave = () => {
-    const filledOptions = updatedQuestion.options.filter((opt) => opt.trim() !== '');
-
-    if (filledOptions.length < 2) {
-      alert('2つ以上の選択肢を入力してください');
-      return;
-    }
-    if (updatedQuestion.answer.length === 0) {
+    if (question.answer === '') {
       alert('正解の選択肢を選んでください');
       return;
     }
@@ -52,10 +41,6 @@ const MultipleOrderCreator = ({ question, setQuestion, setIsSaved }) => {
     setQuestion(updatedQuestion);
     setIsSaved(true);
     alert('問題を更新しました');
-  };
-
-  const addOption = () => {
-    setUpdatedQuestion({ ...updatedQuestion, options: [...updatedQuestion.options, ''] });
   };
 
   return (
@@ -73,60 +58,27 @@ const MultipleOrderCreator = ({ question, setQuestion, setIsSaved }) => {
           }}
         />
       </div>
-
+      
       <div onClick={() => {
         setTempProblem(updatedQuestion.problem);
         setShowProblemModal(true);
       }}>
         <MarkdownArea text={updatedQuestion.problem || '### 問題文'} />
       </div>
-
-      <div className="list-group">
-        {updatedQuestion.options.map((option, index) => {
-          const optionIndex = index + 1;
-          const selectedIndex = updatedQuestion.answer.indexOf(optionIndex) + 1;
-
-          return (
-            <AnswerOrder
-              key={index}
-              option={option || `選択肢${optionIndex}`}
-              optionIndex={optionIndex}
-              selectedIndex={selectedIndex}
-              onChange={(e) => {
-                const selected = Number(e.target.value);
-                setUpdatedQuestion((prev) => {
-                  if (prev.answer.includes(selected)) {
-                    return {...prev, answer: prev.answer.filter(index => index !== selected)};
-                  } else {
-                    return {...prev, answer: [...prev.answer, optionIndex]};
-                  }
-                })
-              }}
-              onClick={() => {
-                setEditingOptionIndex(index);
-                setTempOption(option);
-                setShowOptionModal(true);
-              }}
-              onDelete={(deleteIndex) => {
-                const newOptions = updatedQuestion.options.filter((_, i) => i !== deleteIndex);
-                const newAnswer = updatedQuestion.answer
-                  .filter((ans) => ans !== deleteIndex + 1)
-                  .map((ans) => (ans > deleteIndex + 1 ? ans - 1 : ans));
-                setUpdatedQuestion({ ...updatedQuestion, options: newOptions, answer: newAnswer });
-              }}
-              disabled={!option.trim()}
-            />
-          )
-        })}
-        
-        <button
-          className="list-group-item list-group-item-action text-center text-primary"
-          onClick={addOption}
-        >
-          ＋ 選択肢を追加
-        </button>
+      
+      <div className="mb-2">
+        <input
+          type="text"
+          className="form-control w-full"
+          placeholder={`解答を入力してください`}
+          value={updatedQuestion.answer}
+          onChange={(e) => {
+            const newAnswer = e.target.value;
+            setQuestion(prev => ({ ...prev, answer: newAnswer }));
+          }}
+        />
       </div>
-
+      
       <div 
         className={`alert mt-3 alert-success`} 
         role="alert" 
@@ -187,20 +139,6 @@ const MultipleOrderCreator = ({ question, setQuestion, setIsSaved }) => {
       />
 
       <TextEditModal
-        show={showOptionModal}
-        title={`選択肢 ${editingOptionIndex + 1} の編集`}
-        value={tempOption}
-        onChange={setTempOption}
-        onClose={() => setShowOptionModal(false)}
-        onSave={() => {
-          const newOptions = [...updatedQuestion.options];
-          newOptions[editingOptionIndex] = tempOption;
-          setUpdatedQuestion({ ...updatedQuestion, options: newOptions });
-          setShowOptionModal(false);
-        }}
-      />
-
-      <TextEditModal
         show={showExplanationModal}
         title="解説文の編集"
         placeholder="解説文"
@@ -213,19 +151,6 @@ const MultipleOrderCreator = ({ question, setQuestion, setIsSaved }) => {
         }}
         question={question}
       />
-
-      <div className="form-check mt-3">
-        <input
-          className="form-check-input"
-          type="checkbox"
-          id="shuffleOption"
-          checked={updatedQuestion.random || false}
-          onChange={(e) => setUpdatedQuestion({ ...updatedQuestion, random: e.target.checked })}
-        />
-        <label className="form-check-label" htmlFor="shuffleOption">
-          選択肢をランダムに並べる
-        </label>
-      </div>
 
       <button className="btn btn-primary mt-3 me-2" onClick={handleSave}>
         保存
@@ -240,4 +165,4 @@ const MultipleOrderCreator = ({ question, setQuestion, setIsSaved }) => {
   );
 };
 
-export default MultipleOrderCreator;
+export default WordCreator;

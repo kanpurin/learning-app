@@ -74,8 +74,7 @@ const MultipleResponseCreator = ({ questions, setQuestions }) => {
       <div className="mb-3 border-bottom pb-2">
         <input
           type="text"
-          className="form-control"
-          style={{ borderRadius: '0', boxShadow: 'none' }}
+          className="form-control w-full"
           placeholder="問題のタイトル（summary）"
           value={question.summary}
           onChange={(e) => {
