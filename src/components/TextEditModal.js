@@ -13,20 +13,29 @@ const TextEditModal = ({ show, title, placeholder = "", value, onChange, onClose
 
   // 解説テンプレートを動的生成
   const generateDynamicTemplate = () => {
-    if (!question || !Array.isArray(question.answer) || !Array.isArray(question.options)) return null;
+    if (question && Array.isArray(question.answer) && Array.isArray(question.options)) {
+      const corrects = question.answer
+        .map((index) => {
+          const optionText = question.options[index - 1];
+          return optionText ? `- ${optionText}` : null;
+        })
+        .filter(Boolean)
+        .join('\n');
 
-    const corrects = question.answer
-      .map((index) => {
-        const optionText = question.options[index - 1];
-        return optionText ? `- ${optionText}` : null;
-      })
-      .filter(Boolean)
-      .join('\n');
-
-    return {
-      label: '解説テンプレート',
-      value: `正解：\n${corrects}\n---\n`,
-    };
+      return {
+        label: '解説テンプレート',
+        value: `正解：\n${corrects}\n---\n`,
+      };
+    }
+    else if (question && !Array.isArray(question.answer)) {
+      return {
+        label: '解説テンプレート',
+        value: `正解：\n${question.answer}\n---\n`,
+      };
+    }
+    else {
+      return null;
+    }
   };
 
   const staticTemplates = [
