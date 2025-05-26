@@ -30,7 +30,7 @@ const TextEditModal = ({ show, title, placeholder = "", value, onChange, onClose
     else if (question && !Array.isArray(question.answer)) {
       return {
         label: '解説テンプレート',
-        value: `正解：\n${question.answer}\n---\n`,
+        value: `正解：\n- ${question.answer}\n---\n`,
       };
     }
     else {
