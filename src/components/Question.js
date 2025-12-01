@@ -18,6 +18,14 @@ const Question = ({ questions, setQuestions }) => {
 
 	const currentQuestion = currentQuestionIndex !== null ? questions[currentQuestionIndex] : null;
 
+	const remainingCount = questions.filter(q => {
+		const isTagMatch = selectedTags.length === 0 || selectedTags.some(tag => q.tags?.includes(tag));
+		if (!isTagMatch) return false;
+
+		const now = new Date();
+		return q.card.reps === 0 || new Date(q.card.due) <= now;
+	}).length;
+
 	useEffect(() => {
 		if (currentQuestionIndex == null && selectNextQuestionIndex() !== null) {
 			setNextQuestionIndex();
@@ -157,6 +165,7 @@ const Question = ({ questions, setQuestions }) => {
 			{quizStarted && currentQuestionIndex !== null && (
 				<div className="container mt-4">
 					<div className="card p-4 shadow-sm">
+						{memoryMode !== 'infinite' && (<h5 className='text-end bm-4'>残り {remainingCount} 問</h5>)}
 						<h5 className="text-center mb-4">問題 {currentQuestionIndex + 1} / {questions.length}</h5>
 						<Qtype
 							question={currentQuestion}
