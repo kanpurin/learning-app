@@ -1,6 +1,6 @@
 # learning-app
 
-npm run deployしてできたdocsを https://github.com/KH-WebApp/lerning-app に適用
+[![GitHub Pages](https://img.shields.io/static/v1?label=GitHub+Pages&message=+&color=brightgreen&logo=github)](https://kanpurin.github.io/learning-app/)
 
 ---
 
