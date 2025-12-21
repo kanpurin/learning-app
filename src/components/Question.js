@@ -72,7 +72,6 @@ const Question = ({ questions, setQuestions }) => {
 					return i;
 				})
 				.filter(i => i !== -1);
-			console.log('Filtered Indexes:', filteredIndexes);
 			if (filteredIndexes.length > 0) {
 				return filteredIndexes[Math.floor(Math.random() * filteredIndexes.length)];
 			}
