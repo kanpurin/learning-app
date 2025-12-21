@@ -41,7 +41,7 @@ const Question = ({ questions, setQuestions }) => {
 				.map((q, i) => {
 					const tagMatch = selectedTags.length === 0 || selectedTags.some(tag => q.tags?.includes(tag));
 					if (!tagMatch) return -1;
-					return q.card.reps === 0 ? i : -1;
+					return q.card.reps === 0 ? i : -1; // 学習回数が0の問題を優先
 				})
 				.filter(i => i !== -1);
 			if (unseenIndexes.length > 0) {
@@ -64,8 +64,21 @@ const Question = ({ questions, setQuestions }) => {
 			}
 		}
 		else {
-			// すべての問題からランダムに1問選ぶ
-			return Math.floor(Math.random() * questions.length);
+			// タグでフィルタリングした上でランダムに出題
+			const filteredIndexes = questions
+				.map((q, i) => {
+					const tagMatch = selectedTags.length === 0 || selectedTags.some(tag => q.tags?.includes(tag));
+					if (!tagMatch) return -1;
+					return i;
+				})
+				.filter(i => i !== -1);
+			console.log('Filtered Indexes:', filteredIndexes);
+			if (filteredIndexes.length > 0) {
+				return filteredIndexes[Math.floor(Math.random() * filteredIndexes.length)];
+			}
+			else {
+				return null;
+			}
 		}
 	}
 
