@@ -1,9 +1,10 @@
 import React from 'react';
-import GoogleDriveWriter from './GoogleDriveWriter';
+// import GoogleDriveWriter from './GoogleDriveWriter';
+import FirebaseWriter from './FirebaseWriter';
 import { createEmptyCard } from 'ts-fsrs';
 
 // 学習履歴JSONを保存するコンポーネント
-const JSONWriter = ({ questions, fileName, setFileName }) => {
+const JSONWriter = ({ questions, fileName, setFileName, user }) => {
   const handleFileNameChange = (event) => {
     setFileName(event.target.value);
   };
@@ -47,7 +48,12 @@ const JSONWriter = ({ questions, fileName, setFileName }) => {
         <button className="btn btn-success form-control" onClick={handleDownload}>
           学習履歴JSONを保存
         </button>
-        <GoogleDriveWriter questions={questions} fileName={fileName} />
+        {user && (
+          <>
+            {/* <GoogleDriveWriter questions={questions} fileName={fileName} /> */}
+            <FirebaseWriter questions={questions} fileName={fileName} />
+          </>
+        )}
       </div>
     </div>
   );

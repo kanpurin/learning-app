@@ -5,6 +5,7 @@ import CreateQuestion from './components/CreateQuestion';
 import EditQuestion from './components/EditQuestion';
 import JSONReader from './components/JSONReader';
 import JSONWriter from './components/JSONWriter';
+import GoogleLogin from './components/GoogleLogin';
 import './App.css';
 
 // Dexie DB 定義
@@ -23,6 +24,7 @@ const App = () => {
   const [activeTab, setActiveTab] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [savedFlags, setSavedFlags] = useState([]);
+  const [user, setUser] = useState(null);
 
   // 初期読み込み
   useEffect(() => {
@@ -73,11 +75,12 @@ const App = () => {
       </header>
 
       <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
+        <GoogleLogin onUserChange={setUser} />
         <h5>CSVファイルのアップロード</h5>
-        <JSONReader onDataLoad={handleDataLoad} questions={questions} />
+        <JSONReader onDataLoad={handleDataLoad} questions={questions} user={user} />
         {questions?.length > 0 && (
           <div className="mt-4">
-            <JSONWriter questions={questions} fileName={fileName} setFileName={setFileName} />
+            <JSONWriter questions={questions} fileName={fileName} setFileName={setFileName} user={user} />
           </div>
         )}
       </aside>

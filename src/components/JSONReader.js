@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import GoogleDriveReader from './GoogleDriveReader';
+// import GoogleDriveReader from './GoogleDriveReader';
+import FirebaseReader from './FirebaseReader';
 import { createEmptyCard } from "ts-fsrs";
 
-const JSONReader = ({ onDataLoad, questions }) => {
+const JSONReader = ({ onDataLoad, questions, user }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleFileUpload = (event) => {
@@ -66,7 +67,12 @@ const JSONReader = ({ onDataLoad, questions }) => {
         </div>
         
         <div className="d-flex justify-content-center mb-3">
-          <GoogleDriveReader loadJSON={loadJSON} questions={questions} />
+          {user && (
+            <>
+              {/* <GoogleDriveReader loadJSON={loadJSON} questions={questions} /> */}
+              <FirebaseReader loadJSON={loadJSON} questions={questions} />
+            </>
+          )}
         </div>
       </div>
     </div>
