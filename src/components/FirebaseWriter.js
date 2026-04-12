@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import {
-  getFirestore,
+  initializeFirestore,
   collection,
   doc,
   setDoc,
@@ -21,7 +21,9 @@ const FIREBASE_CONFIG = {
 };
 
 const app = getApps().length === 0 ? initializeApp(FIREBASE_CONFIG) : getApps()[0];
-const db = getFirestore(app);
+const db = initializeFirestore(app, {
+  ignoreUndefinedProperties: true
+});
 
 const COLLECTION = 'questionSets';
 
