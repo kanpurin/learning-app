@@ -1,54 +1,35 @@
 import React, { useState, useEffect } from 'react';
-import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import {
-  initializeFirestore,
   collection,
   doc,
   setDoc,
   getDocs,
   serverTimestamp,
-  addDoc, // 自動ID生成用にインポート
+  addDoc,
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { firestoreDb, QUESTION_SETS_COLLECTION } from '../lib/firebaseApp';
+import { serializeQuestions } from '../lib/questionData';
 
-const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyCZooFoR2dYEa0-pnTzaVykWMi_f5iYjx0",
-  authDomain: "learningapp-5cad1.firebaseapp.com",
-  projectId: "learningapp-5cad1",
-  storageBucket: "learningapp-5cad1.firebasestorage.app",
-  messagingSenderId: "774920369319",
-  appId: "1:774920369319:web:617727d38d9c61e44a9782",
-  measurementId: "G-65WM600N0L"
-};
-
-const app = getApps().length === 0 ? initializeApp(FIREBASE_CONFIG) : getApps()[0];
-const db = initializeFirestore(app, {
-  ignoreUndefinedProperties: true
-});
-
-const COLLECTION = 'questionSets';
-
-/**
- * FirebaseWriter
- * * props.questions: 現在アプリに読み込まれている問題配列
- * props.fileName:  デフォルトのセット名
- */
 const FirebaseWriter = ({ questions, fileName }) => {
   const [loading, setLoading] = useState(false);
   const [showOverwriteList, setShowOverwriteList] = useState(false);
   const [existingSets, setExistingSets] = useState([]);
   const [saveName, setSaveName] = useState('');
 
-  // fileNameが変わったら入力欄を更新
   useEffect(() => {
     if (fileName) {
-      // 拡張子 .json を除いた名前を初期値にする
       setSaveName(fileName.replace('.json', ''));
     }
   }, [fileName]);
 
-  // 新規保存
+  const createPayload = (name) => ({
+    name,
+    questions: serializeQuestions(questions),
+    updatedAt: serverTimestamp(),
+  });
+
   const saveNew = async () => {
-    const name = saveName.trim() || '無題セット';
+    const name = saveName.trim() || '無題のセット';
     if (questions.length === 0) {
       alert('保存する問題がありません');
       return;
@@ -56,16 +37,7 @@ const FirebaseWriter = ({ questions, fileName }) => {
 
     setLoading(true);
     try {
-      // 1. コレクション参照を取得
-      const colRef = collection(db, COLLECTION);
-      
-      // 2. ドキュメントを追加 (addDocで自動ID生成)
-      await addDoc(colRef, {
-        name: name,
-        questions: questions, // 配列をそのまま保存
-        updatedAt: serverTimestamp(),
-      });
-
+      await addDoc(collection(firestoreDb, QUESTION_SETS_COLLECTION), createPayload(name));
       alert(`「${name}」を新規保存しました`);
       setSaveName('');
     } catch (e) {
@@ -76,14 +48,13 @@ const FirebaseWriter = ({ questions, fileName }) => {
     }
   };
 
-  // 上書き先一覧を取得
   const openOverwriteList = async () => {
     setLoading(true);
     try {
-      const snapshot = await getDocs(collection(db, COLLECTION));
-      const items = snapshot.docs.map((d) => ({ 
-        id: d.id, 
-        name: d.data().name ?? d.id 
+      const snapshot = await getDocs(collection(firestoreDb, QUESTION_SETS_COLLECTION));
+      const items = snapshot.docs.map((d) => ({
+        id: d.id,
+        name: d.data().name ?? d.id,
       }));
       setExistingSets(items);
       setShowOverwriteList(true);
@@ -95,18 +66,12 @@ const FirebaseWriter = ({ questions, fileName }) => {
     }
   };
 
-  // 既存ドキュメントを上書き
   const overwrite = async (id, name) => {
     if (!window.confirm(`「${name}」を上書きしますか？`)) return;
+
     setLoading(true);
     try {
-      // doc() で既存のIDを指定して setDoc で上書き
-      await setDoc(doc(db, COLLECTION, id), {
-        name,
-        questions,
-        updatedAt: serverTimestamp(),
-      }, { merge: false }); // merge: false で完全に置き換え
-
+      await setDoc(doc(firestoreDb, QUESTION_SETS_COLLECTION, id), createPayload(name), { merge: false });
       alert(`「${name}」を上書きしました`);
       setShowOverwriteList(false);
     } catch (e) {
@@ -127,11 +92,7 @@ const FirebaseWriter = ({ questions, fileName }) => {
           value={saveName}
           onChange={(e) => setSaveName(e.target.value)}
         />
-        <button
-          onClick={saveNew}
-          className="btn btn-primary"
-          disabled={loading || questions.length === 0}
-        >
+        <button onClick={saveNew} className="btn btn-primary" disabled={loading || questions.length === 0}>
           {loading ? '保存中...' : '新規保存'}
         </button>
       </div>
@@ -146,7 +107,7 @@ const FirebaseWriter = ({ questions, fileName }) => {
 
       {showOverwriteList && (
         <div className="mt-2 p-3 border rounded bg-light">
-          <h6 className="small font-weight-bold">上書き先を選択:</h6>
+          <h6 className="small font-weight-bold">上書き先を選択</h6>
           {existingSets.length === 0 ? (
             <p className="small text-muted">保存済みのデータはありません</p>
           ) : (
@@ -156,14 +117,11 @@ const FirebaseWriter = ({ questions, fileName }) => {
                 onClick={() => overwrite(s.id, s.name)}
                 className="btn btn-sm btn-light w-100 mb-1 text-start border"
               >
-                📁 {s.name}
+                {s.name}
               </button>
             ))
           )}
-          <button
-            onClick={() => setShowOverwriteList(false)}
-            className="btn btn-sm btn-link w-100 text-muted"
-          >
+          <button onClick={() => setShowOverwriteList(false)} className="btn btn-sm btn-link w-100 text-muted">
             キャンセル
           </button>
         </div>
@@ -173,3 +131,4 @@ const FirebaseWriter = ({ questions, fileName }) => {
 };
 
 export default FirebaseWriter;
+

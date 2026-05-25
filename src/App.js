@@ -1,48 +1,32 @@
-import React, { useState, useEffect } from 'react';
-import Dexie from 'dexie';
+import React, { useState } from 'react';
 import Question from './components/Question';
 import CreateQuestion from './components/CreateQuestion';
 import EditQuestion from './components/EditQuestion';
 import JSONReader from './components/JSONReader';
 import JSONWriter from './components/JSONWriter';
 import GoogleLogin from './components/GoogleLogin';
+import { clearQuizPersistence, useQuizPersistence } from './hooks/useQuizPersistence';
 import './App.css';
 
-// Dexie DB 定義
-const db = new Dexie('QuizAppDB');
-db.version(1).stores({ store: '&key'});
-const useSaveToDB = (key, value) => {
-  useEffect(() => {
-    if (value === null) return;
-    db.store.put({ key, value });
-  }, [key, value]);
-};
+const TABS = [
+  { id: 'quiz', label: '問題を解く' },
+  { id: 'create', label: '問題を作る' },
+  { id: 'edit', label: '問題を編集する' },
+];
 
 const App = () => {
-  const [questions, setQuestions] = useState(null);
-  const [fileName, setFileName] = useState(null);
-  const [activeTab, setActiveTab] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [savedFlags, setSavedFlags] = useState([]);
   const [user, setUser] = useState(null);
-
-  // 初期読み込み
-  useEffect(() => {
-    const loadData = async () => {
-      const q = await db.store.get('questions');
-      const f = await db.store.get('fileName');
-      const t = await db.store.get('activeTab');
-      setQuestions(q?.value || []);
-      setFileName(f?.value || 'questions_data');
-      setActiveTab(t?.value || 'quiz');
-      setSavedFlags((q?.value || []).map(() => true));
-    };
-    loadData();
-  }, []);
-  
-  useSaveToDB('questions', questions);
-  useSaveToDB('fileName', fileName);
-  useSaveToDB('activeTab', activeTab);
+  const {
+    questions,
+    setQuestions,
+    fileName,
+    setFileName,
+    activeTab,
+    setActiveTab,
+    savedFlags,
+    setSavedFlags,
+  } = useQuizPersistence();
 
   const handleDataLoad = async (newQuestions, uploadedFileName) => {
     setQuestions(newQuestions);
@@ -52,16 +36,18 @@ const App = () => {
   };
 
   const handleTabChange = (tab) => {
-		setQuestions(prevQuestions => prevQuestions.filter(q => !q.deleted));
-    if (tab === 'quiz' && savedFlags.some(f => !f)) {
+    setQuestions((prevQuestions) => (prevQuestions || []).filter((q) => !q.deleted));
+
+    if (tab === 'quiz' && savedFlags.some((flag) => !flag)) {
       alert('保存されていない問題があります。問題を解く前に保存してください。');
       return;
     }
+
     setActiveTab(tab);
   };
 
   const resetAll = async () => {
-    await db.store.clear();
+    await clearQuizPersistence();
     window.location.reload();
   };
 
@@ -69,15 +55,15 @@ const App = () => {
     <div className="app-container">
       <header className="header">
         <h1 onClick={resetAll}>クイズアプリ</h1>
-        <button className="hamburger-icon" onClick={() => setIsSidebarOpen(prev => !prev)}>
+        <button className="hamburger-icon" onClick={() => setIsSidebarOpen((prev) => !prev)}>
           &#9776;
         </button>
       </header>
 
       <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
         <GoogleLogin onUserChange={setUser} />
-        <h5>CSVファイルのアップロード</h5>
-        <JSONReader onDataLoad={handleDataLoad} questions={questions} user={user} />
+        <h5>問題データ</h5>
+        <JSONReader onDataLoad={handleDataLoad} questions={questions || []} user={user} />
         {questions?.length > 0 && (
           <div className="mt-4">
             <JSONWriter questions={questions} fileName={fileName} setFileName={setFileName} user={user} />
@@ -88,18 +74,14 @@ const App = () => {
       <main className="main-content" style={{ overflowY: 'auto' }}>
         <nav className="d-flex justify-content-center mt-3">
           <ul className="nav nav-tabs">
-            {['quiz', 'create', 'edit'].map(tab => (
-              <li className="nav-item" key={tab}>
+            {TABS.map((tab) => (
+              <li className="nav-item" key={tab.id}>
                 <button
-                  className={`nav-link ${activeTab === tab ? 'active' : ''}`}
+                  className={`nav-link ${activeTab === tab.id ? 'active' : ''}`}
                   style={{ minWidth: '150px' }}
-                  onClick={() => handleTabChange(tab)}
+                  onClick={() => handleTabChange(tab.id)}
                 >
-                  {{
-                    quiz: '問題を解く',
-                    create: '問題を作る',
-                    edit: '問題を編集する',
-                  }[tab]}
+                  {tab.label}
                 </button>
               </li>
             ))}
@@ -107,12 +89,10 @@ const App = () => {
         </nav>
 
         <div style={{ display: activeTab === 'quiz' ? 'block' : 'none' }}>
-          {questions?.length > 0 && (
-            <Question questions={questions} setQuestions={setQuestions} />
-          )}
+          {questions?.length > 0 && <Question questions={questions} setQuestions={setQuestions} />}
         </div>
         <div style={{ display: activeTab === 'create' ? 'block' : 'none' }}>
-          <CreateQuestion questions={questions} setQuestions={setQuestions} />
+          <CreateQuestion questions={questions || []} setQuestions={setQuestions} />
         </div>
         <div style={{ display: activeTab === 'edit' ? 'block' : 'none' }}>
           {questions?.length > 0 && (

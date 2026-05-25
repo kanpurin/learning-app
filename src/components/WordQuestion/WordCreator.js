@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import MarkdownArea from '../MarkdownArea';
 import TextEditModal from '../TextEditModal';
-import { createEmptyCard } from 'ts-fsrs';
+import { QUESTION_TYPES } from '../../constants/questionTypes';
+import { createQuestionRecord } from '../../lib/questionData';
 
 const WordCreator = ({ questions, setQuestions }) => {
   const [tagInput, setTagInput] = useState('');
@@ -40,14 +41,11 @@ const WordCreator = ({ questions, setQuestions }) => {
       return;
     }
 
-    const newQuestion = {
-      ...question,
-      options: null,
-      type: 'word',
-      deleted: false,
-      card: createEmptyCard(),
-      random: false,
-    };
+    const newQuestion = createQuestionRecord(
+      { ...question, options: null },
+      QUESTION_TYPES.WORD,
+      { random: false },
+    );
 
     setQuestions([...questions, newQuestion]);
     alert('問題を保存しました');

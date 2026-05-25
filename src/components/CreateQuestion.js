@@ -3,16 +3,18 @@ import MultipleChoiceCreator from './MultipleChoiceQuestion/MultipleChoiceCreato
 import MultipleResponseCreator from './MultipleResponseQuestion/MultipleResponseCreator';
 import OrderingCreator from './OrderingQuestion/OrderingCreator';
 import WordQuestion from './WordQuestion/WordCreator';
+import { QUESTION_TYPES, QUESTION_TYPE_LABELS } from '../constants/questionTypes';
+
+const QUESTION_CREATORS = {
+  [QUESTION_TYPES.MULTIPLE_CHOICE]: MultipleChoiceCreator,
+  [QUESTION_TYPES.MULTIPLE_RESPONSE]: MultipleResponseCreator,
+  [QUESTION_TYPES.ORDERING]: OrderingCreator,
+  [QUESTION_TYPES.WORD]: WordQuestion,
+};
 
 const CreateQuestion = ({ questions, setQuestions }) => {
-  const [questionType, setQuestionType] = useState('mcq');
-
-  const QCreator = {
-    mcq: MultipleChoiceCreator,
-    mrq: MultipleResponseCreator,
-    order: OrderingCreator,
-		word: WordQuestion
-  }[questionType] || MultipleChoiceCreator;
+  const [questionType, setQuestionType] = useState(QUESTION_TYPES.MULTIPLE_CHOICE);
+  const QCreator = QUESTION_CREATORS[questionType] || MultipleChoiceCreator;
 
   return (
     <div className="container mt-4">
@@ -22,10 +24,9 @@ const CreateQuestion = ({ questions, setQuestions }) => {
           value={questionType}
           onChange={(e) => setQuestionType(e.target.value)}
         >
-          <option value="mcq">単一選択問題</option>
-          <option value="mrq">複数選択問題</option>
-          <option value="order">並べ替え問題</option>
-          <option value="word">単語入力問題</option>
+          {Object.entries(QUESTION_TYPE_LABELS).map(([type, label]) => (
+            <option key={type} value={type}>{label}</option>
+          ))}
         </select>
       </div>
       <div className="card p-4 shadow-sm">
@@ -36,3 +37,4 @@ const CreateQuestion = ({ questions, setQuestions }) => {
 };
 
 export default CreateQuestion;
+

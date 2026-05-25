@@ -3,6 +3,7 @@ import MultipleChoiceEditor from './MultipleChoiceQuestion/MultipleChoiceEditor'
 import MultipleResponseEditor from './MultipleResponseQuestion/MultipleResponseEditor';
 import OrderingEditor from './OrderingQuestion/OrderingEditor';
 import WordQuestion from './WordQuestion/WordEditor';
+import { QUESTION_TYPES } from '../constants/questionTypes';
 
 const EditQuestion = ({ questions, setQuestions, savedFlags, setSavedFlags }) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(null);
@@ -34,10 +35,10 @@ const EditQuestion = ({ questions, setQuestions, savedFlags, setSavedFlags }) =>
 
   const getQEditor = (question, index) => {
     const QEditor = {
-      mcq: MultipleChoiceEditor,
-      mrq: MultipleResponseEditor,
-      order: OrderingEditor,
-		  word: WordQuestion
+      [QUESTION_TYPES.MULTIPLE_CHOICE]: MultipleChoiceEditor,
+      [QUESTION_TYPES.MULTIPLE_RESPONSE]: MultipleResponseEditor,
+      [QUESTION_TYPES.ORDERING]: OrderingEditor,
+		  [QUESTION_TYPES.WORD]: WordQuestion
     }[question.type] || MultipleChoiceEditor;
 
     return (

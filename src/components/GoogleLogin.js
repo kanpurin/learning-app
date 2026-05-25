@@ -1,33 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { 
-  getAuth, 
   signInWithPopup, 
-  GoogleAuthProvider, 
   signOut, 
   onAuthStateChanged 
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-
-const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyCZooFoR2dYEa0-pnTzaVykWMi_f5iYjx0",
-  authDomain: "learningapp-5cad1.firebaseapp.com",
-  projectId: "learningapp-5cad1",
-  storageBucket: "learningapp-5cad1.firebasestorage.app",
-  messagingSenderId: "774920369319",
-  appId: "1:774920369319:web:617727d38d9c61e44a9782",
-  measurementId: "G-65WM600N0L"
-};
-
-const app = getApps().length === 0 ? initializeApp(FIREBASE_CONFIG) : getApps()[0];
-const auth = getAuth(app);
-const provider = new GoogleAuthProvider();
+import { firebaseAuth, googleProvider } from '../lib/firebaseApp';
 
 const GoogleLogin = ({ onUserChange }) => {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
     // ログイン状態の監視
-    const unsubscribe = onAuthStateChanged(auth, (u) => {
+    const unsubscribe = onAuthStateChanged(firebaseAuth, (u) => {
       setUser(u);
       if (onUserChange) onUserChange(u);
     });
@@ -36,14 +20,14 @@ const GoogleLogin = ({ onUserChange }) => {
 
   const handleLogin = async () => {
     try {
-      await signInWithPopup(auth, provider);
+      await signInWithPopup(firebaseAuth, googleProvider);
     } catch (e) {
       console.error("Login failed:", e);
       alert("ログインに失敗しました");
     }
   };
 
-  const handleLogout = () => signOut(auth);
+  const handleLogout = () => signOut(firebaseAuth);
 
   return (
     <div className="mb-4">

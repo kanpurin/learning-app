@@ -5,6 +5,7 @@ import OrderingQuestion from './OrderingQuestion/OrderingQuestion';
 import WordQuestion from './WordQuestion/WordQuestion';
 import { fsrs, generatorParameters } from 'ts-fsrs';
 import TagSelector from './TagSelector';
+import { QUESTION_TYPES } from '../constants/questionTypes';
 
 const Question = ({ questions, setQuestions }) => {
 	const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -117,10 +118,10 @@ const Question = ({ questions, setQuestions }) => {
 	}, [isAnswered, selectedRating]);
 
 	const Qtype = {
-		mcq: MultipleChoiceQuestion,
-		mrq: MultipleResponseQuestion,
-		order: OrderingQuestion,
-		word: WordQuestion
+		[QUESTION_TYPES.MULTIPLE_CHOICE]: MultipleChoiceQuestion,
+		[QUESTION_TYPES.MULTIPLE_RESPONSE]: MultipleResponseQuestion,
+		[QUESTION_TYPES.ORDERING]: OrderingQuestion,
+		[QUESTION_TYPES.WORD]: WordQuestion
 	}[currentQuestion == null ? null : currentQuestion.type] || MultipleChoiceQuestion;
 
   return (

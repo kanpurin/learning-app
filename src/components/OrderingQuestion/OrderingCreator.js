@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import MarkdownArea from '../MarkdownArea';
 import TextEditModal from '../TextEditModal';
 import AnswerOrder from './AnswerOrder';
-import { createEmptyCard } from 'ts-fsrs';
+import { QUESTION_TYPES } from '../../constants/questionTypes';
+import { createQuestionRecord } from '../../lib/questionData';
 
 const MultipleOrderCreator = ({ questions, setQuestions }) => {
   const [tagInput, setTagInput] = useState('');
@@ -52,14 +53,11 @@ const MultipleOrderCreator = ({ questions, setQuestions }) => {
       return;
     }
 
-    const newQuestion = {
-      ...question,
-      options: filledOptions,
-      type: 'order',
-      deleted: false,
-      card: createEmptyCard(),
-      random: false,
-    };
+    const newQuestion = createQuestionRecord(
+      { ...question, options: filledOptions },
+      QUESTION_TYPES.ORDERING,
+      { random: false },
+    );
 
     setQuestions([...questions, newQuestion]);
     alert('問題を保存しました');

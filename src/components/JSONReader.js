@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 // import GoogleDriveReader from './GoogleDriveReader';
 import FirebaseReader from './FirebaseReader';
-import { createEmptyCard } from "ts-fsrs";
+import { normalizeQuestions } from '../lib/questionData';
 
 const JSONReader = ({ onDataLoad, questions, user }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -32,20 +32,7 @@ const JSONReader = ({ onDataLoad, questions, user }) => {
   };
 
   const loadJSON = (data, fileName) => {
-    const newQuestions = data.map((item) => ({
-      problem: item.problem,
-      options: item.options,
-      answer: item.answer,
-      explanation: item.explanation,
-      type: item.type,
-      summary: item.summary || '',
-      deleted: false,
-      tags: item.tags || [],
-      card: item.card || createEmptyCard(),
-      random: item.random || false,
-    }));
-
-    onDataLoad(newQuestions, fileName);
+    onDataLoad(normalizeQuestions(data), fileName);
     setIsLoading(false);
   };
 

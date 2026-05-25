@@ -1,30 +1,15 @@
 import React from 'react';
 // import GoogleDriveWriter from './GoogleDriveWriter';
 import FirebaseWriter from './FirebaseWriter';
-import { createEmptyCard } from 'ts-fsrs';
+import { serializeQuestions } from '../lib/questionData';
 
-// 学習履歴JSONを保存するコンポーネント
 const JSONWriter = ({ questions, fileName, setFileName, user }) => {
   const handleFileNameChange = (event) => {
     setFileName(event.target.value);
   };
 
   const handleDownload = () => {
-    const dataToExport = questions
-      .filter((question) => !question.deleted)
-      .map((question) => ({
-      problem: question.problem,
-      options: question.options,
-      answer: question.answer,
-      explanation: question.explanation || '',
-      type: question.type,
-      summary: question.summary || '',
-      tags: question.tags || [],
-      card: question.card || createEmptyCard(),
-      random: question.random || false,
-    }));
-
-    const json = JSON.stringify(dataToExport, null, 2); // 整形して見やすく
+    const json = JSON.stringify(serializeQuestions(questions), null, 2);
     const blob = new Blob([json], { type: 'application/json' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -34,7 +19,6 @@ const JSONWriter = ({ questions, fileName, setFileName, user }) => {
 
   return (
     <div>
-      {/* ファイル名入力フィールド */}
       <div className="mb-3">
         <label htmlFor="file-name" className="form-label">ファイル名</label>
         <input
@@ -60,3 +44,4 @@ const JSONWriter = ({ questions, fileName, setFileName, user }) => {
 };
 
 export default JSONWriter;
+

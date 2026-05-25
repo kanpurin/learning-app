@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import MarkdownArea from '../MarkdownArea';
 import TextEditModal from '../TextEditModal';
 import AnswerMCQ from './AnswerMCQ';
-import { createEmptyCard } from 'ts-fsrs';
+import { QUESTION_TYPES } from '../../constants/questionTypes';
+import { createQuestionRecord } from '../../lib/questionData';
 
 const MultipleChoiceCreator = ({ questions, setQuestions }) => {
   const [tagInput, setTagInput] = useState('');
@@ -52,13 +53,10 @@ const MultipleChoiceCreator = ({ questions, setQuestions }) => {
       return;
     }
 
-    const newQuestion = {
-      ...question,
-      options: filledOptions,
-      type: 'mcq',
-      deleted: false,
-      card: createEmptyCard()
-    };
+    const newQuestion = createQuestionRecord(
+      { ...question, options: filledOptions },
+      QUESTION_TYPES.MULTIPLE_CHOICE,
+    );
 
     setQuestions([...questions, newQuestion]);
     alert('問題を保存しました');
