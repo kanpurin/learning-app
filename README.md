@@ -51,23 +51,281 @@ FSRS (Free Spaced Repetition Scheduler) を使った、ブラウザ上で動く�
 
 ## 問題データ
 
-問題データはJSON配列として扱います。主な項目は次の通りです。
+問題データは、問題オブジェクトを並べたJSON配列です。JSONファイルを読み込む場合は、ファイル全体が次のような配列になっている必要があります。
+
+```json
+[
+  {
+    "summary": "HTTPステータスコードの基本",
+    "problem": "成功を表すHTTPステータスコードはどれですか？",
+    "options": ["200", "301", "404", "500"],
+    "answer": [1],
+    "explanation": "200 OK はリクエストが成功したことを表します。",
+    "type": "mcq",
+    "tags": ["web", "http"],
+    "card": {
+      "due": "2026-05-25T13:16:21.353Z",
+      "stability": 0,
+      "difficulty": 0,
+      "elapsed_days": 0,
+      "scheduled_days": 0,
+      "reps": 0,
+      "lapses": 0,
+      "state": 0
+    },
+    "random": false
+  }
+]
+```
+
+### 全体フォーマット
+
+- ルート要素は配列です。
+- 配列の各要素が1問分の問題オブジェクトです。
+- JSONとして正しい形式である必要があります。コメント、末尾カンマ、シングルクォートは使えません。
+- アプリからエクスポートしたJSONには、問題本文だけでなくFSRSの学習履歴も含まれます。
+- 手書きで新規作成する場合、`card` は省略できます。読み込み時に未学習状態のカードが自動作成されます。
+
+### フィールド一覧
+
+| フィールド | 型 | 必須 | 説明 |
+| --- | --- | --- | --- |
+| `summary` | string | 任意 | 編集画面の一覧に表示する問題の短いタイトルです。省略時は空文字になります。 |
+| `problem` | string | 推奨 | 問題文です。Markdown、HTML、KaTeX数式を利用できます。 |
+| `options` | string[] または null | 問題形式による | 選択肢です。`mcq`、`mrq`、`order` では2件以上を推奨します。`word` では `null` または空配列で構いません。 |
+| `answer` | number[] または string | 必須 | 正答です。問題形式によって型と意味が変わります。詳しくは「問題形式ごとの書き方」を参照してください。 |
+| `explanation` | string | 任意 | 回答後に表示する解説です。Markdown、HTML、KaTeX数式を利用できます。 |
+| `type` | string | 任意 | 問題形式です。`mcq`、`mrq`、`order`、`word` のいずれかを指定します。省略時は `mcq` として扱われます。 |
+| `tags` | string[] | 任意 | 出題時の絞り込みに使うタグです。省略時は空配列になります。 |
+| `card` | object | 任意 | FSRSの学習履歴です。省略時は未学習状態のカードが自動作成されます。 |
+| `random` | boolean | 任意 | `true` にすると出題時に選択肢の表示順をシャッフルします。省略時は `false` です。 |
+
+### 問題形式ごとの書き方
+
+#### 単一選択問題: `mcq`
+
+1つだけ正解がある選択問題です。
+
+- `type`: `"mcq"`
+- `options`: 選択肢の配列
+- `answer`: 正解の選択肢番号を1つだけ入れた配列
+- 選択肢番号は0始まりではなく、1始まりです。
 
 ```json
 {
-  "summary": "問題の概要",
-  "problem": "問題文",
-  "options": ["選択肢1", "選択肢2"],
+  "summary": "HTTP 200",
+  "problem": "成功を表すHTTPステータスコードはどれですか？",
+  "options": ["200", "301", "404", "500"],
   "answer": [1],
-  "explanation": "解説",
+  "explanation": "`200 OK` は成功レスポンスです。",
   "type": "mcq",
-  "tags": ["tag"],
-  "card": {},
+  "tags": ["web", "http"],
+  "random": true
+}
+```
+
+この例では、`options[0]` の `"200"` が正解なので `answer` は `[1]` です。
+
+#### 複数選択問題: `mrq`
+
+複数の正解がある選択問題です。
+
+- `type`: `"mrq"`
+- `options`: 選択肢の配列
+- `answer`: 正解の選択肢番号をすべて入れた配列
+- 回答時は、選んだ番号の集合が `answer` と完全一致した場合に正解になります。
+
+```json
+{
+  "summary": "JavaScriptのプリミティブ",
+  "problem": "JavaScriptのプリミティブ型をすべて選んでください。",
+  "options": ["string", "number", "Array", "boolean"],
+  "answer": [1, 2, 4],
+  "explanation": "`Array` はオブジェクトです。",
+  "type": "mrq",
+  "tags": ["javascript"],
   "random": false
 }
 ```
 
-`type` には `mcq`、`mrq`、`order`、`word` を指定します。`card` にはFSRSの学習履歴が保存されます。
+この例では、`string`、`number`、`boolean` が正解です。
+
+#### 並べ替え問題: `order`
+
+選択肢を正しい順番に並べる問題です。
+
+- `type`: `"order"`
+- `options`: 並べ替え対象の配列
+- `answer`: 正しい順序で選択肢番号を並べた配列
+- 選択肢番号は1始まりです。
+
+```json
+{
+  "summary": "HTTPリクエストの流れ",
+  "problem": "一般的なHTTP通信の流れを正しい順番に並べてください。",
+  "options": ["レスポンスを受け取る", "リクエストを送る", "画面に反映する"],
+  "answer": [2, 1, 3],
+  "explanation": "まずリクエストを送り、レスポンスを受け取り、最後に画面へ反映します。",
+  "type": "order",
+  "tags": ["web", "http"],
+  "random": false
+}
+```
+
+この例では、表示上の選択肢2、1、3の順に選ぶと正解です。
+
+#### 単語入力問題: `word`
+
+テキスト入力で答える問題です。
+
+- `type`: `"word"`
+- `options`: `null` または空配列
+- `answer`: 正解文字列
+- 入力値と `answer` が完全一致した場合に正解になります。大文字小文字、空白、全角半角の違いも区別されます。
+
+```json
+{
+  "summary": "Reactの状態管理",
+  "problem": "Reactでコンポーネント内の状態を扱う基本的なHook名は？",
+  "options": null,
+  "answer": "useState",
+  "explanation": "`useState` は関数コンポーネントで状態を扱うためのHookです。",
+  "type": "word",
+  "tags": ["react"],
+  "random": false
+}
+```
+
+### Markdownと数式
+
+`problem`、`options`、`explanation` はMarkdownとして表示されます。
+
+利用できる主な記法:
+
+- 見出し、箇条書き、太字、インラインコード、コードブロック
+- GitHub Flavored Markdownの表
+- HTMLタグ
+- KaTeXによる数式
+
+例:
+
+```json
+{
+  "summary": "二次方程式",
+  "problem": "次の式の解を考えます。\n\n$$x^2 - 4 = 0$$",
+  "options": ["$x = 2$", "$x = -2$", "$x = \\pm 2$"],
+  "answer": [3],
+  "explanation": "$$x^2 = 4$$ より、解は $x = \\pm 2$ です。",
+  "type": "mcq",
+  "tags": ["math"],
+  "random": false
+}
+```
+
+JSON文字列内で改行を書く場合は `\n` を使います。バックスラッシュを含む数式を書く場合は、JSONのエスケープ規則に従って `\\` のように書く必要があります。
+
+### FSRSの `card`
+
+`card` は復習スケジューリング用の学習履歴です。手作業で問題を作るだけなら省略して構いません。省略時は次のような未学習状態が自動で補われます。
+
+```json
+{
+  "due": "2026-05-25T13:16:21.353Z",
+  "stability": 0,
+  "difficulty": 0,
+  "elapsed_days": 0,
+  "scheduled_days": 0,
+  "reps": 0,
+  "lapses": 0,
+  "state": 0
+}
+```
+
+各項目の意味:
+
+| フィールド | 説明 |
+| --- | --- |
+| `due` | 次回復習予定日時です。ISO 8601形式の日時文字列として保存されます。 |
+| `stability` | 記憶の安定度です。FSRSが更新します。 |
+| `difficulty` | 問題の難しさです。FSRSが更新します。 |
+| `elapsed_days` | 前回レビューからの経過日数です。 |
+| `scheduled_days` | 次回レビューまでの日数です。 |
+| `reps` | レビュー回数です。0なら未学習として扱われます。 |
+| `lapses` | 忘却、または失敗した回数です。 |
+| `state` | FSRS内部のカード状態です。 |
+| `last_review` | レビュー後に追加されることがある最終レビュー日時です。 |
+
+アプリは、`reps` が `0` の問題を未学習として優先出題します。`reps` が `1` 以上の場合は、`due` が現在時刻以前になった問題を復習対象として出題します。
+
+### 読み込み時の補完ルール
+
+JSON読み込み時、足りない項目は次のように補われます。
+
+| 項目 | 補完値 |
+| --- | --- |
+| `problem` | `""` |
+| `options` | `[]` |
+| `answer` | `""` |
+| `explanation` | `""` |
+| `type` | `"mcq"` |
+| `summary` | `""` |
+| `deleted` | `false` |
+| `tags` | `[]` |
+| `card` | 未学習状態のFSRSカード |
+| `random` | `false` |
+
+ただし、補完されるからといって全ての問題が有効になるわけではありません。実際に解ける問題にするには、問題形式に合った `options` と `answer` を指定してください。
+
+### 書き出し時のルール
+
+アプリからJSONを書き出すと、各問題は次の項目だけを含みます。
+
+- `problem`
+- `options`
+- `answer`
+- `explanation`
+- `type`
+- `summary`
+- `tags`
+- `card`
+- `random`
+
+編集画面で削除した問題は内部的には `deleted: true` になりますが、JSON書き出し時には除外されます。そのため、エクスポートしたJSONには `deleted` は含まれません。
+
+### Firebase保存時の形式
+
+Firestoreには `questionSets` コレクションへ、次の形式のドキュメントとして保存します。
+
+```json
+{
+  "name": "問題セット名",
+  "questions": [
+    {
+      "summary": "HTTPステータスコードの基本",
+      "problem": "成功を表すHTTPステータスコードはどれですか？",
+      "options": ["200", "301", "404", "500"],
+      "answer": [1],
+      "explanation": "200 OK はリクエストが成功したことを表します。",
+      "type": "mcq",
+      "tags": ["web", "http"],
+      "card": {
+        "due": "2026-05-25T13:16:21.353Z",
+        "stability": 0,
+        "difficulty": 0,
+        "elapsed_days": 0,
+        "scheduled_days": 0,
+        "reps": 0,
+        "lapses": 0,
+        "state": 0
+      },
+      "random": false
+    }
+  ],
+  "updatedAt": "Firestore server timestamp"
+}
+```
+
+JSONファイルとして読み書きする場合は、Firestore用の外側の `name`、`questions`、`updatedAt` は不要です。JSONファイルでは `questions` の中身、つまり問題オブジェクトの配列だけを書きます。
 
 ## 開発
 
