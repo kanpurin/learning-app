@@ -55,12 +55,26 @@ const App = () => {
     <div className="app-container">
       <header className="header">
         <h1 onClick={resetAll}>クイズアプリ</h1>
-        <button className="hamburger-icon" onClick={() => setIsSidebarOpen((prev) => !prev)}>
+        <button
+          className="hamburger-icon"
+          onClick={() => setIsSidebarOpen((prev) => !prev)}
+          aria-controls="app-sidebar"
+          aria-expanded={isSidebarOpen}
+          aria-label={isSidebarOpen ? '問題データメニューを閉じる' : '問題データメニューを開く'}
+        >
           &#9776;
         </button>
       </header>
 
-      <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
+      {isSidebarOpen && (
+        <button
+          className="sidebar-backdrop"
+          aria-label="問題データメニューを閉じる"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      <aside id="app-sidebar" className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
         <GoogleLogin onUserChange={setUser} />
         <h5>問題データ</h5>
         <JSONReader onDataLoad={handleDataLoad} questions={questions || []} user={user} />
@@ -72,7 +86,7 @@ const App = () => {
       </aside>
 
       <main className="main-content" style={{ overflowY: 'auto' }}>
-        <nav className="d-flex justify-content-center mt-3">
+        <nav className="app-tabs" aria-label="メインメニュー">
           <ul className="nav nav-tabs">
             {TABS.map((tab) => (
               <li className="nav-item" key={tab.id}>

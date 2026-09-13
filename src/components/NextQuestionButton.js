@@ -5,7 +5,7 @@ const NextQuestionButton = ({ onNext, disabled }) => {
     <button 
       onClick={onNext} 
       disabled={disabled} 
-      className="btn btn-secondary btn-lg w-50"
+      className="btn btn-secondary btn-lg quiz-action-button"
     >
       次の問題
     </button>

@@ -3,10 +3,7 @@ import { Rating } from 'ts-fsrs';
 
 const RatingButton = ({ selectedRating, setSelectedRating }) => {
   return (
-    <div
-      className="d-grid gap-2 mt-3"
-      style={{ gridTemplateColumns: 'repeat(4, 1fr)', display: 'grid' }}
-    >
+    <div className="rating-grid">
       <button
         className={`btn w-100 ${selectedRating === Rating.Again ? 'btn-secondary' : 'btn-outline-secondary'}`}
         onClick={() => setSelectedRating(Rating.Again)}

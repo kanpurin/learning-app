@@ -52,7 +52,7 @@ const WordQuestion = ({ question, isCorrect, setIsCorrect, setNextQuestionIndex,
       { memoryMode !== 'infinite' && isAnswered && <RatingButton selectedRating={selectedRating} setSelectedRating={setSelectedRating} /> }
 
       {/* ボタン（回答 & 次の問題） */}
-      <div className="d-flex justify-content-center gap-3 mt-4">
+      <div className="quiz-actions">
         <AnswerButton handleAnswer={handleAnswer} disabled={isAnswered || inputWord === ''} />
         <NextQuestionButton onNext={handleNextQuestion} disabled={!isAnswered || (!selectedRating && memoryMode !== 'infinite')} />
       </div>

@@ -4,7 +4,7 @@ const AnswerButton = ({ handleAnswer, disabled }) => {
   return (
     <button
       onClick={handleAnswer}
-      className="btn btn-primary btn-lg w-50"
+      className="btn btn-primary btn-lg quiz-action-button"
       disabled={disabled}
     >
       回答する

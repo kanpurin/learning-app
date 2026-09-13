@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 // import GoogleDriveReader from './GoogleDriveReader';
 import FirebaseReader from './FirebaseReader';
-import { normalizeQuestions } from '../lib/questionData';
+import { formatValidationErrors, normalizeQuestions, validateQuestions } from '../lib/questionData';
 
 const JSONReader = ({ onDataLoad, questions, user }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -32,8 +32,16 @@ const JSONReader = ({ onDataLoad, questions, user }) => {
   };
 
   const loadJSON = (data, fileName) => {
+    const validationErrors = validateQuestions(data);
+    if (validationErrors.length > 0) {
+      alert(formatValidationErrors(validationErrors));
+      setIsLoading(false);
+      return false;
+    }
+
     onDataLoad(normalizeQuestions(data), fileName);
     setIsLoading(false);
+    return true;
   };
 
   return (

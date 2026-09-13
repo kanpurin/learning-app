@@ -23,6 +23,7 @@
 
 .header h1 {
   margin: 0;
+  font-size: 1.6rem;
 }
 
 .hamburger-icon {
@@ -31,6 +32,12 @@
   border: none;
   background: none;
   color: white;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.sidebar-backdrop {
+  display: none;
 }
 
 .sidebar {
@@ -55,7 +62,37 @@
   margin-left: 0;
   transition: margin-left 0.3s ease-in-out;
   padding: 20px;
+  padding-bottom: 32px;
   flex-grow: 1;
+}
+
+.app-tabs {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.quiz-action-button {
+  flex: 1 1 0;
+  min-height: 52px;
+}
+
+.quiz-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.rating-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.rating-grid .btn {
+  min-height: 48px;
 }
 
 .sidebar h5 {
@@ -79,4 +116,108 @@
 
 .toggle-sidebar-btn:hover {
   background-color: #0056b3;
+}
+
+@media (max-width: 640px) {
+  .app-container {
+    height: 100dvh;
+  }
+
+  .header {
+    padding: 8px 14px;
+    min-height: 56px;
+  }
+
+  .header h1 {
+    font-size: 1.2rem;
+  }
+
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    border: 0;
+    background: rgba(15, 23, 42, 0.45);
+    z-index: 1050;
+  }
+
+  .sidebar {
+    top: 0;
+    left: -100%;
+    width: min(100vw, 420px);
+    max-width: 100vw;
+    padding: 72px 18px 24px;
+    z-index: 1100;
+    box-shadow: 8px 0 28px rgba(15, 23, 42, 0.24);
+  }
+
+  .sidebar.open {
+    left: 0;
+  }
+
+  .main-content {
+    margin-top: 56px;
+    padding: 12px;
+    padding-bottom: 92px;
+  }
+
+  .app-tabs {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    margin: 0;
+    padding: 8px 10px max(8px, env(safe-area-inset-bottom));
+    background: #ffffff;
+    border-top: 1px solid #dee2e6;
+    box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.08);
+  }
+
+  .app-tabs .nav {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+    gap: 6px;
+    border-bottom: 0;
+  }
+
+  .app-tabs .nav-item {
+    min-width: 0;
+  }
+
+  .app-tabs .nav-link {
+    width: 100%;
+    min-width: 0 !important;
+    min-height: 48px;
+    padding: 8px 6px;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    line-height: 1.2;
+    white-space: normal;
+  }
+
+  .container {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .card {
+    border-radius: 8px;
+  }
+
+  .quiz-actions {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .quiz-action-button {
+    flex-basis: 100%;
+    width: 100%;
+  }
+
+  .rating-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }

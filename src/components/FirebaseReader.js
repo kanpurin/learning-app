@@ -6,7 +6,6 @@ import {
   getDoc,
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { firestoreDb, QUESTION_SETS_COLLECTION } from '../lib/firebaseApp';
-import { normalizeQuestions } from '../lib/questionData';
 
 const FirebaseReader = ({ loadJSON, questions }) => {
   const [loading, setLoading] = useState(false);
@@ -41,8 +40,9 @@ const FirebaseReader = ({ loadJSON, questions }) => {
         return;
       }
 
-      loadJSON(normalizeQuestions(snap.data().questions || []), name);
-      setShowList(false);
+      if (loadJSON(snap.data().questions || [], name)) {
+        setShowList(false);
+      }
     } catch (e) {
       alert('読み込みに失敗しました');
       console.error(e);
@@ -87,4 +87,3 @@ const FirebaseReader = ({ loadJSON, questions }) => {
 };
 
 export default FirebaseReader;
-

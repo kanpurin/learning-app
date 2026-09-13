@@ -38,7 +38,7 @@ FSRS (Free Spaced Repetition Scheduler) を使った、ブラウザ上で動く�
   - ページを再読み込みしても作業状態を復元
 - Markdown表示
   - 問題文、選択肢、解説をMarkdownで表示
-  - GitHub Flavored Markdown、改行、HTML、数式表示(KaTeX)に対応
+  - GitHub Flavored Markdown、改行、数式表示(KaTeX)に対応
 - 選択肢のランダム表示
   - 問題ごとに選択肢のシャッフルを設定可能
 
@@ -91,10 +91,10 @@ FSRS (Free Spaced Repetition Scheduler) を使った、ブラウザ上で動く�
 | フィールド | 型 | 必須 | 説明 |
 | --- | --- | --- | --- |
 | `summary` | string | 任意 | 編集画面の一覧に表示する問題の短いタイトルです。省略時は空文字になります。 |
-| `problem` | string | 推奨 | 問題文です。Markdown、HTML、KaTeX数式を利用できます。 |
+| `problem` | string | 推奨 | 問題文です。Markdown、KaTeX数式を利用できます。 |
 | `options` | string[] または null | 問題形式による | 選択肢です。`mcq`、`mrq`、`order` では2件以上を推奨します。`word` では `null` または空配列で構いません。 |
 | `answer` | number[] または string | 必須 | 正答です。問題形式によって型と意味が変わります。詳しくは「問題形式ごとの書き方」を参照してください。 |
-| `explanation` | string | 任意 | 回答後に表示する解説です。Markdown、HTML、KaTeX数式を利用できます。 |
+| `explanation` | string | 任意 | 回答後に表示する解説です。Markdown、KaTeX数式を利用できます。 |
 | `type` | string | 任意 | 問題形式です。`mcq`、`mrq`、`order`、`word` のいずれかを指定します。省略時は `mcq` として扱われます。 |
 | `tags` | string[] | 任意 | 出題時の絞り込みに使うタグです。省略時は空配列になります。 |
 | `card` | object | 任意 | FSRSの学習履歴です。省略時は未学習状態のカードが自動作成されます。 |
@@ -204,8 +204,9 @@ FSRS (Free Spaced Repetition Scheduler) を使った、ブラウザ上で動く�
 
 - 見出し、箇条書き、太字、インラインコード、コードブロック
 - GitHub Flavored Markdownの表
-- HTMLタグ
 - KaTeXによる数式
+
+安全のため、JSONやFirebaseから読み込んだHTMLタグはHTMLとして解釈しません。画像を入れたい場合はMarkdownの画像記法を使います。
 
 例:
 

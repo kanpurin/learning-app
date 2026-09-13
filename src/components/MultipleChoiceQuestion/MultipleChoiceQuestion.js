@@ -68,7 +68,7 @@ const MultipleChoiceQuestion = ({ question, optionOrder, isCorrect, setIsCorrect
       { memoryMode !== 'infinite' && isAnswered && <RatingButton selectedRating={selectedRating} setSelectedRating={setSelectedRating} /> }
 
       {/* ボタン（回答 & 次の問題） */}
-      <div className="d-flex justify-content-center gap-3 mt-4">
+      <div className="quiz-actions">
         <AnswerButton handleAnswer={handleAnswer} disabled={isAnswered || selectedIndex === -1} />
         <NextQuestionButton onNext={handleNextQuestion} disabled={!isAnswered || (!selectedRating && memoryMode !== 'infinite')} />
       </div>

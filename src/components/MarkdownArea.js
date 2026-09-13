@@ -2,7 +2,6 @@ import React from 'react';
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
-import rehypeRaw from "rehype-raw";
 import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
 import 'katex/dist/katex.min.css'
@@ -11,7 +10,7 @@ const MarkdownArea = ({ text, margin = "0.5em" }) => {
   return (
     <ReactMarkdown
       remarkPlugins={[remarkGfm, remarkBreaks, remarkMath]}
-      rehypePlugins={[rehypeRaw, rehypeKatex]}
+      rehypePlugins={[rehypeKatex]}
       components={{
         p: ({ children }) => (
           <p style={{ marginTop: margin, marginBottom: margin }}>{children}</p>
