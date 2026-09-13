@@ -82,10 +82,10 @@
     "start": "node scripts/start.js",
     "build": "node scripts/build.js",
     "test": "node scripts/test.js",
-    "rm": "rm -rf docs",
-    "mv": "move build docs",
+    "rm": "node -e \"require('fs').rmSync('docs',{recursive:true,force:true})\"",
+    "mv": "node -e \"require('fs').renameSync('build','docs')\"",
     "git": "git add . && git commit -m \"auto commit\" && git push origin main",
-    "deploy": "npm run rm && npm run build && npm run mv && npm run git"
+    "deploy": "node scripts/deploy.js"
   },
   "eslintConfig": {
     "extends": [
