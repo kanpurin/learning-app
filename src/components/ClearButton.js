@@ -5,7 +5,9 @@ import { faTimes } from '@fortawesome/free-solid-svg-icons';
 function ClearButton({ onClear }) {
 	return (
 		<button
+			type="button"
 			className="btn btn-light"
+			aria-label="入力内容をクリア"
 			onClick={onClear}
 			onMouseEnter={(e) => e.target.style.backgroundColor = 'lightgray'}
 			onMouseLeave={(e) => e.target.style.backgroundColor = 'white'}

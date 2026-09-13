@@ -1,5 +1,8 @@
 import React, { useRef } from 'react';
 import { Modal, Button, Form } from 'react-bootstrap';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPaste } from '@fortawesome/free-solid-svg-icons';
+import { faCopy } from '@fortawesome/free-regular-svg-icons';
 import ClearButton from './ClearButton';
 
 const TextEditModal = ({ show, title, placeholder = "", value, onChange, onClose, onSave, question }) => {
@@ -9,6 +12,56 @@ const TextEditModal = ({ show, title, placeholder = "", value, onChange, onClose
   const handleClear = () => {
     onChange('');
     textareaRef.current.focus();
+  };
+
+  const insertTextAtCursor = (text) => {
+    const currentValue = value || '';
+    const textarea = textareaRef.current;
+
+    if (!textarea) {
+      onChange(`${currentValue}${text}`);
+      return;
+    }
+
+    const start = textarea.selectionStart ?? currentValue.length;
+    const end = textarea.selectionEnd ?? start;
+    const newText = currentValue.slice(0, start) + text + currentValue.slice(end);
+
+    onChange(newText);
+
+    setTimeout(() => {
+      const position = start + text.length;
+      textarea.focus();
+      textarea.setSelectionRange(position, position);
+    }, 0);
+  };
+
+  const handleCopy = async () => {
+    if (!navigator.clipboard?.writeText) {
+      alert('このブラウザではコピー機能を利用できません。');
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(value || '');
+      textareaRef.current?.focus();
+    } catch (error) {
+      alert('コピーできませんでした。ブラウザの権限設定を確認してください。');
+    }
+  };
+
+  const handlePaste = async () => {
+    if (!navigator.clipboard?.readText) {
+      alert('このブラウザでは貼り付け機能を利用できません。');
+      return;
+    }
+
+    try {
+      const pastedText = await navigator.clipboard.readText();
+      insertTextAtCursor(pastedText);
+    } catch (error) {
+      alert('貼り付けできませんでした。ブラウザの権限設定を確認してください。');
+    }
   };
 
   // 解説テンプレートを動的生成
@@ -95,6 +148,16 @@ const TextEditModal = ({ show, title, placeholder = "", value, onChange, onClose
         <Modal.Title>{title}</Modal.Title>
       </Modal.Header>
       <Modal.Body style={{ position: 'relative' }}>
+        <div className="d-flex flex-wrap gap-2 mb-2">
+          <Button type="button" variant="outline-secondary" size="sm" onClick={handleCopy}>
+            <FontAwesomeIcon icon={faCopy} className="me-1" />
+            コピー
+          </Button>
+          <Button type="button" variant="outline-secondary" size="sm" onClick={handlePaste}>
+            <FontAwesomeIcon icon={faPaste} className="me-1" />
+            貼り付け
+          </Button>
+        </div>
         {/* クリアボタンをテキストエリア内に表示 */}
         <div style={{ position: 'relative' }}>
           <ClearButton onClear={handleClear} />
