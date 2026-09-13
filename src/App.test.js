@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import App from './App';
 
 jest.mock('./hooks/useQuizPersistence', () => ({
@@ -35,3 +36,18 @@ test('renders the quiz app shell', () => {
   expect(screen.getByText('JSON reader mock')).toBeInTheDocument();
 });
 
+test('closes the data menu from inside the sidebar', () => {
+  render(<App />);
+
+  const menuButton = screen.getByRole('button', { name: '問題データメニューを開く' });
+  userEvent.click(menuButton);
+
+  const closeButton = screen.getByRole('button', { name: 'サイドメニューを閉じる' });
+  expect(closeButton).toBeInTheDocument();
+  expect(menuButton).toHaveAttribute('aria-expanded', 'true');
+
+  userEvent.click(closeButton);
+
+  expect(screen.queryByRole('button', { name: 'サイドメニューを閉じる' })).not.toBeInTheDocument();
+  expect(menuButton).toHaveAttribute('aria-expanded', 'false');
+});

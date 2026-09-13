@@ -75,6 +75,16 @@ const App = () => {
       )}
 
       <aside id="app-sidebar" className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
+        {isSidebarOpen && (
+          <button
+            type="button"
+            className="sidebar-close-button"
+            aria-label="サイドメニューを閉じる"
+            onClick={() => setIsSidebarOpen(false)}
+          >
+            <span aria-hidden="true">&times;</span>
+          </button>
+        )}
         <GoogleLogin onUserChange={setUser} />
         <h5>問題データ</h5>
         <JSONReader onDataLoad={handleDataLoad} questions={questions || []} user={user} />

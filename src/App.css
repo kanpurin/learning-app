@@ -57,6 +57,10 @@
   left: 0;  /* 開くと画面内に表示 */
 }
 
+.sidebar-close-button {
+  display: none;
+}
+
 .main-content {
   margin-top: 80px;  /* ヘッダーの下にスペースを作る */
   margin-left: 0;
@@ -149,6 +153,23 @@
     padding: 72px 18px 24px;
     z-index: 1100;
     box-shadow: 8px 0 28px rgba(15, 23, 42, 0.24);
+  }
+
+  .sidebar-close-button {
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    display: inline-flex;
+    width: 44px;
+    height: 44px;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #212529;
+    font-size: 2rem;
+    line-height: 1;
   }
 
   .sidebar.open {
