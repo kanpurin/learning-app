@@ -5,7 +5,7 @@ const { spawnSync } = require('child_process');
 const root = path.resolve(__dirname, '..');
 const docsDir = path.join(root, 'docs');
 const buildDir = path.join(root, 'build');
-const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+const buildScript = path.join(root, 'scripts', 'build.js');
 
 const ensureInsideRoot = (target) => {
   const relative = path.relative(root, target);
@@ -20,6 +20,11 @@ const run = (command, args, options = {}) => {
     stdio: options.stdio || 'inherit',
     shell: false,
   });
+
+  if (result.error) {
+    console.error(result.error.message);
+    process.exit(1);
+  }
 
   if (options.allowStatus?.includes(result.status)) {
     return result;
@@ -44,7 +49,7 @@ ensureInsideRoot(docsDir);
 ensureInsideRoot(buildDir);
 
 fs.rmSync(docsDir, { recursive: true, force: true });
-run(npmCommand, ['run', 'build']);
+run(process.execPath, [buildScript]);
 
 if (!fs.existsSync(buildDir)) {
   throw new Error('Build directory was not created.');
@@ -60,4 +65,3 @@ if (hasStagedChanges()) {
   console.log('No docs changes to commit.');
 }
 run('git', ['push', 'origin', 'main']);
-
