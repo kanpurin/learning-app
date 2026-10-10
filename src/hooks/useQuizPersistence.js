@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import Dexie from 'dexie';
+import { normalizeFsrsCard } from '../lib/fsrsCard';
 
 const db = new Dexie('QuizAppDB');
 db.version(1).stores({ store: '&key' });
@@ -24,7 +25,9 @@ export const useQuizPersistence = () => {
       const q = await db.store.get('questions');
       const f = await db.store.get('fileName');
       const t = await db.store.get('activeTab');
-      const loadedQuestions = q?.value || [];
+      const loadedQuestions = (q?.value || []).map(question => ({
+        ...question, card: question.card ? normalizeFsrsCard(question.card) : question.card,
+      }));
 
       setQuestions(loadedQuestions);
       setFileName(f?.value || 'questions_data');

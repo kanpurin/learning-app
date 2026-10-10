@@ -245,6 +245,8 @@ JSON文字列内で改行を書く場合は `\n` を使います。バックス�
 
 ### FSRSの `card`
 
+`due` と `last_review` は保存時にISO 8601文字列へ統一します。読み込み時はISO文字列、Date、FirebaseのTimestamp（`toDate()`または`seconds`・`nanoseconds`）をDateへ変換します。古いFirebaseデータの日時も変換し、学習回数・難易度・安定度などの履歴は保持します。
+
 `card` は復習スケジューリング用の学習履歴です。手作業で問題を作るだけなら省略して構いません。省略時は次のような未学習状態が自動で補われます。
 
 ```json

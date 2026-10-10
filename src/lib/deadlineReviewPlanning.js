@@ -1,4 +1,5 @@
 import { fsrs, Rating } from 'ts-fsrs';
+import { normalizeFsrsCard } from './fsrsCard';
 
 const model = fsrs({ enable_short_term: true, maximum_interval: 90 });
 const EPSILON = 1e-8;
@@ -9,7 +10,7 @@ export function dateKey(date) {
 
 export function predictRecall(card, date) {
   if (!card.reps || !card.last_review || !(card.stability > 0)) return 0;
-  const value = model.get_retrievability(card, date, false);
+  const value = model.get_retrievability(normalizeFsrsCard(card), date, false);
   return Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0;
 }
 
@@ -52,6 +53,7 @@ function terminalValue(branches, end, target) {
 
 // Bounded two-review lookahead; ratings and future learning steps remain approximations.
 export function reviewAlternatives(card, { now, end, targetRetention = 0.9 }) {
+  card = normalizeFsrsCard(card);
   const baseline = Math.min(targetRetention, predictRecall(card, end));
   if (baseline >= targetRetention - EPSILON) return [];
   const dates = candidateDates(card, now, end);

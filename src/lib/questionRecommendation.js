@@ -1,4 +1,5 @@
 import { State } from 'ts-fsrs';
+import { cardDate } from './fsrsCard';
 
 export const DEFAULT_NEW_QUESTION_LIMIT = 10;
 
@@ -12,7 +13,7 @@ export function getQuestionQueue(questions, {
   if (memoryMode === 'infinite') return { candidates: matching.map(item => item.index), count: matching.length };
 
   const due = matching.filter(({ question }) => question.card.reps > 0 &&
-    new Date(question.card.due) <= now);
+    cardDate(question.card.due) <= now);
   const learning = due.filter(({ question }) =>
     question.card.state === State.Learning || question.card.state === State.Relearning);
   const unseen = matching.filter(({ question }) => question.card.reps === 0);

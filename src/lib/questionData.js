@@ -1,4 +1,5 @@
 import { createEmptyCard } from 'ts-fsrs';
+import { normalizeFsrsCard, serializeFsrsCard } from './fsrsCard';
 import { QUESTION_TYPES } from '../constants/questionTypes';
 
 const VALID_QUESTION_TYPES = Object.values(QUESTION_TYPES);
@@ -153,7 +154,7 @@ export const normalizeQuestion = (item = {}) => ({
   summary: item.summary || '',
   deleted: false,
   tags: item.tags || [],
-  card: item.card || createEmptyCard(),
+  card: item.card ? normalizeFsrsCard(item.card) : createEmptyCard(),
   random: item.random || false,
 });
 
@@ -167,7 +168,7 @@ export const serializeQuestion = (question) => ({
   type: question.type,
   summary: question.summary || '',
   tags: question.tags || [],
-  card: question.card || createEmptyCard(),
+  card: serializeFsrsCard(question.card || createEmptyCard()),
   random: question.random || false,
 });
 

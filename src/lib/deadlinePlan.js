@@ -1,5 +1,6 @@
 import { State } from 'ts-fsrs';
 import { allocateReviewPlans, predictRecall } from './deadlineReviewPlanning';
+import { normalizeFsrsCard } from './fsrsCard';
 
 const DAY = 86400000;
 
@@ -21,7 +22,9 @@ export function getDeadlinePlan(questions, {
 }) {
   const end = deadlineDate(deadline);
   if (!Number.isFinite(end.getTime()) || end < now) return null;
-  const matching = questions.map((question, index) => ({ question, index }))
+  const matching = questions.map((question, index) => ({ question: {
+    ...question, card: normalizeFsrsCard(question.card),
+  }, index }))
     .filter(({ question }) => !selectedTags.length || selectedTags.some(tag => question.tags?.includes(tag)));
   const unseen = matching.filter(({ question }) => !question.card.reps);
   // Reserve the last fifth of the original calendar window for consolidation.

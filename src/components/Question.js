@@ -8,6 +8,7 @@ import TagSelector from './TagSelector';
 import { QUESTION_TYPES } from '../constants/questionTypes';
 import { DEFAULT_NEW_QUESTION_LIMIT, getQuestionQueue, selectQuestionIndex } from '../lib/questionRecommendation';
 import { getDeadlinePlan, loadDeadlineSettings, localDate, saveDeadlineSettings } from '../lib/deadlinePlan';
+import { normalizeFsrsCard } from '../lib/fsrsCard';
 
 const Question = ({ questions, setQuestions }) => {
 	const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -100,7 +101,7 @@ const Question = ({ questions, setQuestions }) => {
 			const f = fsrs(params);
 			setQuestions(prevQuestions => {
 				const newQuestions = [...prevQuestions];
-				const item = f.next(newQuestions[currentQuestionIndex].card, new Date(), selectedRating);
+				const item = f.next(normalizeFsrsCard(newQuestions[currentQuestionIndex].card), new Date(), selectedRating);
 				newQuestions[currentQuestionIndex] = {
 					...newQuestions[currentQuestionIndex],
 					card: item.card
