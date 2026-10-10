@@ -35,11 +35,21 @@ test('due relearning is prioritized while review slots remain', () => {
   expect(getDeadlinePlan([fresh(), learned('2026-10-09', State.Relearning)], options).candidates).toEqual([1]);
 });
 
-test('deadline risk allows an early review but not repeated early reviews on the same day', () => {
+test('a risk can be deferred when a later review has better expected benefit', () => {
   const item = learned('2026-10-20');
-  expect(getDeadlinePlan([item], options).candidates).toEqual([0]);
+  const plan = getDeadlinePlan([item], options);
+  expect(plan.candidates).toEqual([]);
+  expect(plan.plannedReviews).toBe(1);
+  expect(plan.nextReviewDate).not.toBeNull();
+});
+
+test('deadline-day risks can be reviewed early but not repeatedly on that day', () => {
+  const item = learned('2026-10-20');
+  item.card.stability = 1;
+  const finalDay = { ...options, deadline: '2026-10-10' };
+  expect(getDeadlinePlan([item], finalDay).candidates).toEqual([0]);
   item.card.last_review = now;
-  expect(getDeadlinePlan([item], options).candidates).toEqual([]);
+  expect(getDeadlinePlan([item], finalDay).candidates).toEqual([]);
 });
 
 test('daily budget stops selection and invalid or past deadlines are rejected', () => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import MultipleChoiceQuestion from './MultipleChoiceQuestion/MultipleChoiceQuestion';
 import MultipleResponseQuestion from './MultipleResponseQuestion/MultipleResponseQuestion';
 import OrderingQuestion from './OrderingQuestion/OrderingQuestion';
@@ -21,17 +21,27 @@ const Question = ({ questions, setQuestions }) => {
 	const [newQuestionLimit, setNewQuestionLimit] = useState(DEFAULT_NEW_QUESTION_LIMIT);
 	const [newQuestionsIntroduced, setNewQuestionsIntroduced] = useState(0);
 	const [deadlineSettings, setDeadlineSettings] = useState(loadDeadlineSettings);
+	const [planningNow, setPlanningNow] = useState(() => new Date());
 	const deadline = typeof deadlineSettings.deadline === 'string' ? deadlineSettings.deadline : '';
 	const dailyLimit = Number(deadlineSettings.dailyLimit) || 30;
 	const targetRetention = Number(deadlineSettings.targetRetention) || 0.9;
 	const scope = JSON.stringify([selectedTags.slice().sort(), questions.map(q => [q.problem, q.tags])]);
-	const day = localDate();
+	const day = localDate(planningNow);
 	const ledgerKey = JSON.stringify([scope, day]);
 	const today = deadlineSettings.ledger?.[ledgerKey] || { answers: 0, newCount: 0 };
-	const deadlinePlan = memoryMode === 'deadline' ? getDeadlinePlan(questions, {
-		deadline, dailyLimit, targetRetention, selectedTags, today,
-		startedOn: deadlineSettings.startedOn || day,
-	}) : null;
+	const answersToday = today.answers;
+	const newToday = today.newCount;
+	const startedOn = deadlineSettings.startedOn || day;
+	const deadlinePlan = useMemo(() => memoryMode === 'deadline' ? getDeadlinePlan(questions, {
+		deadline, dailyLimit, targetRetention, selectedTags, now: planningNow,
+		today: { answers: answersToday, newCount: newToday }, startedOn,
+	}) : null, [questions, memoryMode, deadline, dailyLimit, targetRetention, selectedTags,
+		planningNow, answersToday, newToday, startedOn]);
+	useEffect(() => {
+		if (memoryMode !== 'deadline') return;
+		const timer = setInterval(() => setPlanningNow(new Date()), 60000);
+		return () => clearInterval(timer);
+	}, [memoryMode]);
 	const updateDeadline = values => setDeadlineSettings(previous => ({ ...previous, ...values }));
 	useEffect(() => { saveDeadlineSettings(deadlineSettings); }, [deadlineSettings]);
 
@@ -45,7 +55,7 @@ const Question = ({ questions, setQuestions }) => {
 			setNextQuestionIndex();
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [questions]);
+	}, [questions, planningNow]);
 
 	const selectNextQuestionIndex = () => {
 		if (memoryMode === 'deadline') {
@@ -184,6 +194,8 @@ const Question = ({ questions, setQuestions }) => {
 					<p>目標日 {deadline} · 目標達成見込み {deadlinePlan.ready} / {deadlinePlan.total} 問</p>
 					<p>目標日の推定記憶率 {Math.round(deadlinePlan.predictedRetention * 100)}% · 未学習 {deadlinePlan.unseen} 問</p>
 					<p>今日の新規目標 {deadlinePlan.newGoal} 問 · 回答済み {today.answers} / {dailyLimit} 回</p>
+					{deadlinePlan.nextReviewDate && <p>次の復習予定 {deadlinePlan.nextReviewDate}</p>}
+					{deadlinePlan.unplannedReviews > 0 && <p role="status" className="text-danger">復習枠に収まらない問題 {deadlinePlan.unplannedReviews} 問</p>}
 					{deadlinePlan.overloaded && <p role="status" className="text-danger">新規問題だけで1日の上限を超えています。回答数の上限または目標日を見直してください。</p>}
 				</div>
 			)}

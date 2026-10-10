@@ -1,6 +1,6 @@
-import { fsrs, Rating, State } from 'ts-fsrs';
+import { State } from 'ts-fsrs';
+import { allocateReviewPlans, predictRecall } from './deadlineReviewPlanning';
 
-const model = fsrs({ enable_short_term: true, maximum_interval: 90 });
 const DAY = 86400000;
 
 export function localDate(date = new Date()) {
@@ -12,8 +12,7 @@ export function deadlineDate(value) {
 }
 
 export function recallAt(card, date) {
-  if (!card.reps || !card.last_review || !(card.stability > 0)) return 0;
-  return model.get_retrievability(card, date, false);
+  return predictRecall(card, date);
 }
 
 export function getDeadlinePlan(questions, {
@@ -35,31 +34,35 @@ export function getDeadlinePlan(questions, {
   const newGoal = Math.ceil((unseen.length + today.newCount) / introductionDays);
   const newRemaining = Math.max(0, newGoal - today.newCount);
   const budget = Math.max(0, dailyLimit - today.answers);
+  const dayKey = localDate(now);
   const reviewed = matching.filter(({ question }) => question.card.reps > 0);
   const due = reviewed.filter(({ question }) => new Date(question.card.due) <= now);
   const learning = due.filter(({ question }) => [State.Learning, State.Relearning].includes(question.card.state));
-  const risks = reviewed.filter(({ question }) => question.card.state === State.Review &&
-    localDate(new Date(question.card.last_review || now)) !== localDate(now) &&
-    recallAt(question.card, end) < targetRetention);
-  const priority = item => {
-    const card = item.question.card;
-    const before = recallAt(card, end);
-    let after = before;
-    try {
-      const branches = model.repeat(card, now);
-      const success = recallAt(card, now);
-      after = success * recallAt(branches[Rating.Good].card, end) +
-        (1 - success) * recallAt(branches[Rating.Again].card, end);
-    } catch {
-      // Imported cards with incomplete model data still receive deficit priority.
-    }
-    const deficit = Math.max(0, targetRetention - before);
-    return Math.max(0, after - before) * deficit;
-  };
-  const reviews = [...new Map([...due, ...risks].map(item => [item.index, item])).values()]
-    .sort((a, b) => priority(b) - priority(a) || new Date(a.question.card.due) - new Date(b.question.card.due));
-  // Reserve slots for today's introductions so a review backlog cannot starve them.
+  const reviewItems = reviewed.filter(({ question }) => question.card.state === State.Review &&
+    localDate(new Date(question.card.last_review || now)) !== localDate(now));
+  const futureLearning = reviewed.filter(({ question }) =>
+    [State.Learning, State.Relearning].includes(question.card.state));
   const newSlots = Math.min(unseen.length, newRemaining, budget);
+  const futureNewQuota = Math.min(dailyLimit, Math.ceil(Math.max(0, unseen.length - newSlots) /
+    Math.max(1, introductionDays - 1)));
+  const allocation = allocateReviewPlans(reviewItems, {
+    now, end, targetRetention,
+    capacityForDay: date => {
+      const key = localDate(date);
+      const reservedLearning = futureLearning.filter(({ question }) => {
+        const dueDate = new Date(question.card.due);
+        return key === dayKey ? dueDate <= now : localDate(dueDate) === key;
+      }).length;
+      const reservedNew = key === dayKey ? newSlots : key <= localDate(introductionEnd) ? futureNewQuota : 0;
+      return Math.max(0, (key === dayKey ? budget : dailyLimit) - reservedNew - reservedLearning);
+    },
+  });
+  const reviews = allocation.today.map(plan => ({ index: plan.index }));
+  // Malformed imported review cards can still be studied at their stored due date.
+  const fallback = due.filter(({ question, index }) => question.card.state === State.Review &&
+    !allocation.scheduled.has(index) && (!(question.card.stability > 0) || !question.card.last_review));
+  reviews.push(...fallback);
+  // Reserve slots for today's introductions so a review backlog cannot starve them.
   let candidates = [];
   if (budget > 0) {
     if (newSlots > 0 && budget <= newSlots) candidates = unseen;
@@ -70,11 +73,15 @@ export function getDeadlinePlan(questions, {
   const estimated = reviewed.map(({ question }) => recallAt(question.card, end));
   return {
     candidates: candidates.map(item => item.index),
-    count: Math.min(budget, reviews.length + newSlots),
+    count: Math.min(budget, learning.length + reviews.length + newSlots),
     total: matching.length, unseen: unseen.length, newGoal, newRemaining,
     ready: estimated.filter(value => value >= targetRetention).length,
     predictedRetention: matching.length ? estimated.reduce((sum, value) => sum + value, 0) / matching.length : 0,
     overloaded: newGoal > dailyLimit,
+    plannedReviews: allocation.scheduled.size,
+    unplannedReviews: allocation.unplanned,
+    nextReviewDate: [...allocation.scheduled.values()].map(plan => localDate(plan.dates[0]))
+      .filter(date => date > dayKey).sort()[0] || null,
   };
 }
 
