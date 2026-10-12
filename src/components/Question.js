@@ -1,14 +1,15 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import MultipleChoiceQuestion from './MultipleChoiceQuestion/MultipleChoiceQuestion';
 import MultipleResponseQuestion from './MultipleResponseQuestion/MultipleResponseQuestion';
 import OrderingQuestion from './OrderingQuestion/OrderingQuestion';
 import WordQuestion from './WordQuestion/WordQuestion';
-import { fsrs, generatorParameters } from 'ts-fsrs';
+import { fsrs, generatorParameters, Rating, State } from 'ts-fsrs';
 import TagSelector from './TagSelector';
 import { QUESTION_TYPES } from '../constants/questionTypes';
 import { DEFAULT_NEW_QUESTION_LIMIT, getQuestionQueue, selectQuestionIndex } from '../lib/questionRecommendation';
 import { getDeadlinePlan, loadDeadlineSettings, localDate, saveDeadlineSettings } from '../lib/deadlinePlan';
 import { normalizeFsrsCard } from '../lib/fsrsCard';
+import { blockedRetries, delayRetry, RETRY_WAIT_MS, RETRY_OTHER_ANSWERS } from '../lib/retrySpacing';
 
 const Question = ({ questions, setQuestions }) => {
 	const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -23,6 +24,11 @@ const Question = ({ questions, setQuestions }) => {
 	const [newQuestionsIntroduced, setNewQuestionsIntroduced] = useState(0);
 	const [deadlineSettings, setDeadlineSettings] = useState(loadDeadlineSettings);
 	const [planningNow, setPlanningNow] = useState(() => new Date());
+	const [retries, setRetries] = useState({});
+	const [answeredCount, setAnsweredCount] = useState(0);
+	const answerCounter = useRef(0);
+	const blockedIndexes = useMemo(() => blockedRetries(retries, answeredCount, planningNow), [retries, answeredCount, planningNow]);
+	const timeBlockedIndexes = useMemo(() => blockedRetries(retries, answeredCount, planningNow, true), [retries, answeredCount, planningNow]);
 	const deadline = typeof deadlineSettings.deadline === 'string' ? deadlineSettings.deadline : '';
 	const dailyLimit = Number(deadlineSettings.dailyLimit) || 30;
 	const targetRetention = Number(deadlineSettings.targetRetention) || 0.9;
@@ -33,23 +39,38 @@ const Question = ({ questions, setQuestions }) => {
 	const answersToday = today.answers;
 	const newToday = today.newCount;
 	const startedOn = deadlineSettings.startedOn || day;
-	const deadlinePlan = useMemo(() => memoryMode === 'deadline' ? getDeadlinePlan(questions, {
-		deadline, dailyLimit, targetRetention, selectedTags, now: planningNow,
-		today: { answers: answersToday, newCount: newToday }, startedOn,
-	}) : null, [questions, memoryMode, deadline, dailyLimit, targetRetention, selectedTags,
-		planningNow, answersToday, newToday, startedOn]);
+	const deadlinePlan = useMemo(() => {
+		if (memoryMode !== 'deadline') return null;
+		const options = { deadline, dailyLimit, targetRetention, selectedTags, now: planningNow,
+			today: { answers: answersToday, newCount: newToday }, startedOn };
+		const plan = getDeadlinePlan(questions, { ...options, blockedIndexes });
+		return plan?.candidates.length ? plan : getDeadlinePlan(questions, { ...options, blockedIndexes: timeBlockedIndexes });
+	}, [questions, memoryMode, deadline, dailyLimit, targetRetention, selectedTags,
+		planningNow, answersToday, newToday, startedOn, blockedIndexes, timeBlockedIndexes]);
 	useEffect(() => {
-		if (memoryMode !== 'deadline') return;
-		const timer = setInterval(() => setPlanningNow(new Date()), 60000);
+		if (!quizStarted && memoryMode !== 'deadline') return;
+		const timer = setInterval(() => setPlanningNow(new Date()), 10000);
 		return () => clearInterval(timer);
-	}, [memoryMode]);
+	}, [memoryMode, quizStarted]);
 	const updateDeadline = values => setDeadlineSettings(previous => ({ ...previous, ...values }));
 	useEffect(() => { saveDeadlineSettings(deadlineSettings); }, [deadlineSettings]);
 
 	const currentQuestion = currentQuestionIndex !== null ? questions[currentQuestionIndex] : null;
 
-	const queueOptions = { memoryMode, selectedTags, newQuestionsRemaining: newQuestionLimit - newQuestionsIntroduced };
+	const queueOptions = { memoryMode, selectedTags, now: planningNow, newQuestionsRemaining: newQuestionLimit - newQuestionsIntroduced, blockedIndexes };
 	const remainingCount = memoryMode === 'deadline' ? deadlinePlan?.count || 0 : getQuestionQueue(questions, queueOptions).count;
+	const waitingDates = questions.flatMap((question, index) => {
+		if (selectedTags.length && !selectedTags.some(tag => question.tags?.includes(tag))) return [];
+		const retry = retries[index];
+		if (retry && retry.notBefore > planningNow.getTime()) return [retry.notBefore];
+		if (memoryMode !== 'infinite' && [State.Learning, State.Relearning].includes(question.card.state)) {
+			const due = normalizeFsrsCard(question.card).due.getTime();
+			if (due > planningNow.getTime()) return [due];
+		}
+		return [];
+	});
+	const waitingUntil = waitingDates.length && (memoryMode !== 'deadline' || (deadlinePlan && today.answers < dailyLimit))
+		? new Date(Math.min(...waitingDates)) : null;
 
 	useEffect(() => {
 		if (currentQuestionIndex == null && selectNextQuestionIndex() !== null) {
@@ -63,12 +84,15 @@ const Question = ({ questions, setQuestions }) => {
 			const candidates = deadlinePlan?.candidates || [];
 			return candidates.length ? candidates[Math.floor(Math.random() * candidates.length)] : null;
 		}
-		return selectQuestionIndex(questions, queueOptions);
+		return selectQuestionIndex(questions, queueOptions) ?? selectQuestionIndex(questions, { ...queueOptions, blockedIndexes: timeBlockedIndexes });
 	}
 
 	const setNextQuestionIndex = () => {
 		const nextIndex = selectNextQuestionIndex();
 		setCurrentQuestionIndex(nextIndex);
+		setIsAnswered(false);
+		setIsCorrect(false);
+		setSelectedRating(null);
 		if (questions[nextIndex]?.random === true) {
 			setOptionOrder(questions[nextIndex].options.map((_, i) => i).sort(() => Math.random() - 0.5));
 		}
@@ -78,6 +102,19 @@ const Question = ({ questions, setQuestions }) => {
 		setQuizStarted(true);
 		setNextQuestionIndex();
 	};
+
+	useEffect(() => {
+		if (!isAnswered) return;
+		answerCounter.current += 1;
+		setAnsweredCount(answerCounter.current);
+		if (!isCorrect) {
+			setRetries(previous => ({ ...previous, [currentQuestionIndex]: {
+				notBefore: Date.now() + RETRY_WAIT_MS,
+				afterAnswers: answerCounter.current + RETRY_OTHER_ANSWERS,
+			} }));
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [isAnswered]);
 
 	// 学習履歴を更新
 	useEffect(() => {
@@ -99,12 +136,13 @@ const Question = ({ questions, setQuestions }) => {
 				maximum_interval: 30*3
 			});
 			const f = fsrs(params);
+			const reviewedAt = new Date();
 			setQuestions(prevQuestions => {
 				const newQuestions = [...prevQuestions];
-				const item = f.next(normalizeFsrsCard(newQuestions[currentQuestionIndex].card), new Date(), selectedRating);
+				const item = f.next(normalizeFsrsCard(newQuestions[currentQuestionIndex].card), reviewedAt, selectedRating);
 				newQuestions[currentQuestionIndex] = {
 					...newQuestions[currentQuestionIndex],
-					card: item.card
+					card: selectedRating === Rating.Again ? delayRetry(item.card, reviewedAt) : item.card
 				}
 				return newQuestions;
 			});
@@ -202,7 +240,8 @@ const Question = ({ questions, setQuestions }) => {
 			)}
 			{quizStarted && currentQuestionIndex === null && (
 				<div className="text-center mt-5">
-					<h4>今回の学習を終えました！</h4>
+					<h4>{waitingUntil ? '復習待ちです' : '今回の学習を終えました！'}</h4>
+					{waitingUntil && <p>次の復習 {waitingUntil.toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>}
 				</div>
 			)}
 			{quizStarted && currentQuestionIndex !== null && (

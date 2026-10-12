@@ -7,7 +7,7 @@ import Question from './Question';
 jest.mock('./MultipleChoiceQuestion/MultipleChoiceQuestion', () => props => (
   <div>
     <span>{props.question.problem}</span>
-    <button onClick={() => { props.setIsAnswered(true); props.setSelectedRating(require('ts-fsrs').Rating.Good); }}>Rate</button>
+    <button onClick={() => { props.setIsCorrect(true); props.setIsAnswered(true); props.setSelectedRating(require('ts-fsrs').Rating.Good); }}>Rate</button>
     <button onClick={() => {
       props.setIsAnswered(false); props.setSelectedRating(null); props.setNextQuestionIndex();
     }}>Next</button>

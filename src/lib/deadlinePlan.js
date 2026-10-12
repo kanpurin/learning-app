@@ -19,6 +19,7 @@ export function recallAt(card, date) {
 export function getDeadlinePlan(questions, {
   deadline, targetRetention = 0.9, dailyLimit = 30, selectedTags = [],
   startedOn = localDate(), now = new Date(), today = { answers: 0, newCount: 0 },
+  blockedIndexes = [],
 }) {
   const end = deadlineDate(deadline);
   if (!Number.isFinite(end.getTime()) || end < now) return null;
@@ -39,9 +40,9 @@ export function getDeadlinePlan(questions, {
   const budget = Math.max(0, dailyLimit - today.answers);
   const dayKey = localDate(now);
   const reviewed = matching.filter(({ question }) => question.card.reps > 0);
-  const due = reviewed.filter(({ question }) => new Date(question.card.due) <= now);
+  const due = reviewed.filter(({ question, index }) => !blockedIndexes.includes(index) && new Date(question.card.due) <= now);
   const learning = due.filter(({ question }) => [State.Learning, State.Relearning].includes(question.card.state));
-  const reviewItems = reviewed.filter(({ question }) => question.card.state === State.Review &&
+  const reviewItems = reviewed.filter(({ question, index }) => !blockedIndexes.includes(index) && question.card.state === State.Review &&
     localDate(new Date(question.card.last_review || now)) !== localDate(now));
   const futureLearning = reviewed.filter(({ question }) =>
     [State.Learning, State.Relearning].includes(question.card.state));

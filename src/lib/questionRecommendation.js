@@ -6,10 +6,11 @@ export const DEFAULT_NEW_QUESTION_LIMIT = 10;
 export function getQuestionQueue(questions, {
   selectedTags = [], memoryMode, newQuestionsRemaining = DEFAULT_NEW_QUESTION_LIMIT,
   now = new Date(),
+  blockedIndexes = [],
 } = {}) {
   const matching = questions.map((question, index) => ({ question, index }))
-    .filter(({ question }) => selectedTags.length === 0 ||
-      selectedTags.some(tag => question.tags?.includes(tag)));
+    .filter(({ question, index }) => !blockedIndexes.includes(index) && (selectedTags.length === 0 ||
+      selectedTags.some(tag => question.tags?.includes(tag))));
   if (memoryMode === 'infinite') return { candidates: matching.map(item => item.index), count: matching.length };
 
   const due = matching.filter(({ question }) => question.card.reps > 0 &&
