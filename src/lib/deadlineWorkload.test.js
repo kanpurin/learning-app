@@ -20,6 +20,17 @@ test('counts repeated answers across all questions and respects tag scope', () =
   expect(estimateDeadlineWorkload(questions, { ...options, selectedTags: ['a'] }).good.remainingAnswers).toBe(single.good.remainingAnswers);
 });
 
+test('spaced reviews can estimate a large unseen deck over a multi-day horizon', () => {
+  const questions = Array.from({ length: 316 }, fresh);
+  const result = estimateDeadlineWorkload(questions, {
+    ...options, end: new Date('2026-11-06T23:59:59'),
+  });
+  expect(result.good.unresolved).toBe(0);
+  expect(result.oneFailure.unresolved).toBe(0);
+  expect(result.oneFailure.remainingAnswers).toBeGreaterThan(316);
+  expect(result.oneFailure.answersPerDay).toBeGreaterThan(Math.ceil(316 / 13));
+});
+
 test('already-ready cards require zero further answers and simulation does not alter history', () => {
   const question = { tags: [], card: { ...createEmptyCard(now), reps: 3,
     state: State.Review, stability: 10000, difficulty: 5, last_review: now } };

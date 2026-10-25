@@ -63,7 +63,7 @@ test('daily progress is separate from total pending items and extra learning is 
     localStorage.setItem('learning-app-deadline-plan', JSON.stringify({
       deadline: '2026-10-26', dailyLimit: 1, targetRetention: 0.9,
       ledger: { [key]: { answers: 0, newCount: 0, goal: { answers: 1, newQuestions: 1,
-        estimated: true, config: JSON.stringify(['2026-10-26', 0.9, 1]) } } },
+        estimated: true, config: JSON.stringify(['2026-10-26', 0.9, 1, 2]) } } },
     }));
     view = render(<Quiz initialQuestions={initialQuestions} />);
     userEvent.click(screen.getByRole('button', { name: '期限付き' }));
@@ -114,6 +114,8 @@ test('deadline mode continues beyond the daily goal with real answer controls', 
   expect(screen.getByText(/目安に達しましたが/)).toBeInTheDocument();
   expect(screen.getByLabelText('必要回答数の試算')).toBeInTheDocument();
   expect(screen.getByText(/今後すべて「普通」で正答：残り約/)).toBeInTheDocument();
+  expect(screen.getByText(/1日の学習目安：/)).toBeInTheDocument();
+  expect(screen.queryByText(/必要回答数の下限：残り.*1日あたり/)).not.toBeInTheDocument();
   expect(screen.queryByText('今回の学習を終えました！')).not.toBeInTheDocument();
 });
 

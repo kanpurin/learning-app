@@ -9,7 +9,7 @@ import { QUESTION_TYPES } from '../constants/questionTypes';
 import { DEFAULT_NEW_QUESTION_LIMIT, getQuestionQueue, selectQuestionIndex } from '../lib/questionRecommendation';
 import { deadlineDate, getDeadlinePlan, loadDeadlineSettings, localDate, saveDeadlineSettings } from '../lib/deadlinePlan';
 import { estimateDeadlineWorkload } from '../lib/deadlineWorkload';
-import { createDailyGoal } from '../lib/dailyGoal';
+import { createDailyGoal, DAILY_GOAL_VERSION } from '../lib/dailyGoal';
 import { normalizeFsrsCard } from '../lib/fsrsCard';
 import { blockedRetries, delayRetry, RETRY_WAIT_MS, RETRY_OTHER_ANSWERS } from '../lib/retrySpacing';
 
@@ -39,7 +39,7 @@ const Question = ({ questions, setQuestions }) => {
 	const day = localDate(planningNow);
 	const ledgerKey = JSON.stringify([scope, day]);
 	const today = deadlineSettings.ledger?.[ledgerKey] || { answers: 0, newCount: 0 };
-	const goalConfig = JSON.stringify([deadline, targetRetention, dailyLimit]);
+	const goalConfig = JSON.stringify([deadline, targetRetention, dailyLimit, DAILY_GOAL_VERSION]);
 	const storedGoal = today.goal?.config === goalConfig ? today.goal : null;
 	const answersToday = today.answers;
 	const newToday = today.newCount;
@@ -266,18 +266,19 @@ const Question = ({ questions, setQuestions }) => {
 				<div className="container mt-3" aria-live="polite">
 					{deadlinePlan.status === 'target_met' ? <p>全体目標に到達したため、今日の追加回答は不要です（推定）。</p> : <>
 					<h5>今日の目標 {dailyGoal.answers} 回答</h5>
+					<p>1日の学習目安：{dailyGoal.answers} 回答{dailyGoal.estimated ? '（復習込みの試算）' : '（暫定）'}</p>
 					<p>完了 {today.answers} 回答・あと {Math.max(0, dailyGoal.answers - today.answers)} 回答</p>
 					<progress aria-label="今日の学習進捗" style={{ width: '100%' }}
 						max={Math.max(1, dailyGoal.answers)} value={Math.min(today.answers, dailyGoal.answers)} />
 					</>}
-					{!dailyGoal.estimated && <p role="status">必要回答数の試算ができないため、今日の目標は暫定です。</p>}
+					{!dailyGoal.estimated && <p role="status">必要回答数を試算できないため暫定の目安です。このペースで期限に間に合うかは確認できていません。</p>}
 					{deadlinePlan.cannotRetryBeforeDeadline && <p role="status" className="text-danger">期限前に再学習できない問題があります。</p>}
 					<details className="mt-2">
 					<summary>期限までの全体進捗</summary>
 					<p>目標日 {deadline} · 目標記憶率以上（推定） {deadlinePlan.ready} / {deadlinePlan.total} 問</p>
 					<p>今後復習しない場合の目標日の予測記憶率 {Math.round(deadlinePlan.predictedRetention * 100)}%</p>
 					<p>未達 {deadlinePlan.count} 問 · 未学習 {deadlinePlan.unseen} 問 · 今日の回答 {today.answers} 回（目安 {dailyLimit} 回）</p>
-					<p>必要回答数の下限：残り {deadlinePlan.minimumAdditionalAnswers} 回・1日あたり {deadlinePlan.minimumDailyAnswers} 回（誤答・追加復習分を除く）</p>
+					<p>未達問題へ1回ずつ回答する分：{deadlinePlan.minimumAdditionalAnswers} 回（復習を含まない下限）</p>
 					{workload && <div aria-label="必要回答数の試算">
 						{workload.good.remainingAnswers !== null
 							? <p>今後すべて「普通」で正答：残り約 {workload.good.remainingAnswers} 回・1日平均 {workload.good.answersPerDay} 回</p>

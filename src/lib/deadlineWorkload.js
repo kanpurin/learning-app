@@ -24,7 +24,11 @@ function simulate(questions, { now, end, targetRetention }, firstAttemptFails) {
           const last = card.last_review?.getTime();
           const earliest = Number.isFinite(last) ? last + RETRY_WAIT_MS : +when;
           const learning = [State.Learning, State.Relearning].includes(card.state);
-          when = new Date(Math.max(+when, earliest, learning ? +card.due : +when));
+          const nextDay = Number.isFinite(last) ? new Date(last) : new Date(when);
+          nextDay.setDate(nextDay.getDate() + 1);
+          // Spaced normal reviews avoid an endless run of same-day memory updates.
+          const scheduled = learning ? +card.due : Math.min(+card.due, +nextDay);
+          when = new Date(Math.max(+when, earliest, scheduled));
         }
         if (when > end) break;
         const rating = firstAttemptFails && attempts === 0 ? Rating.Again : Rating.Good;
