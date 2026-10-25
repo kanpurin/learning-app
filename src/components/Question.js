@@ -9,6 +9,7 @@ import { QUESTION_TYPES } from '../constants/questionTypes';
 import { DEFAULT_NEW_QUESTION_LIMIT, getQuestionQueue, selectQuestionIndex } from '../lib/questionRecommendation';
 import { deadlineDate, getDeadlinePlan, loadDeadlineSettings, localDate, saveDeadlineSettings } from '../lib/deadlinePlan';
 import { estimateDeadlineWorkload } from '../lib/deadlineWorkload';
+import { createDailyGoal } from '../lib/dailyGoal';
 import { normalizeFsrsCard } from '../lib/fsrsCard';
 import { blockedRetries, delayRetry, RETRY_WAIT_MS, RETRY_OTHER_ANSWERS } from '../lib/retrySpacing';
 
@@ -27,6 +28,7 @@ const Question = ({ questions, setQuestions }) => {
 	const [planningNow, setPlanningNow] = useState(() => new Date());
 	const [retries, setRetries] = useState({});
 	const [answeredCount, setAnsweredCount] = useState(0);
+	const [additionalLearning, setAdditionalLearning] = useState(false);
 	const answerCounter = useRef(0);
 	const blockedIndexes = useMemo(() => blockedRetries(retries, answeredCount, planningNow), [retries, answeredCount, planningNow]);
 	const timeBlockedIndexes = useMemo(() => blockedRetries(retries, answeredCount, planningNow, true), [retries, answeredCount, planningNow]);
@@ -37,20 +39,36 @@ const Question = ({ questions, setQuestions }) => {
 	const day = localDate(planningNow);
 	const ledgerKey = JSON.stringify([scope, day]);
 	const today = deadlineSettings.ledger?.[ledgerKey] || { answers: 0, newCount: 0 };
+	const goalConfig = JSON.stringify([deadline, targetRetention, dailyLimit]);
+	const storedGoal = today.goal?.config === goalConfig ? today.goal : null;
 	const answersToday = today.answers;
 	const newToday = today.newCount;
 	const startedOn = deadlineSettings.startedOn || day;
 	const deadlinePlan = useMemo(() => {
 		if (memoryMode !== 'deadline') return null;
 		const options = { deadline, dailyLimit, targetRetention, selectedTags, now: planningNow,
-			today: { answers: answersToday, newCount: newToday }, startedOn };
+			today: { answers: answersToday, newCount: newToday }, startedOn,
+			newQuestionGoal: storedGoal?.newQuestions ?? Infinity };
 		const plan = getDeadlinePlan(questions, { ...options, blockedIndexes });
 		return plan?.candidates.length ? plan : getDeadlinePlan(questions, { ...options, blockedIndexes: timeBlockedIndexes });
 	}, [questions, memoryMode, deadline, dailyLimit, targetRetention, selectedTags,
-		planningNow, answersToday, newToday, startedOn, blockedIndexes, timeBlockedIndexes]);
+		planningNow, answersToday, newToday, startedOn, blockedIndexes, timeBlockedIndexes, storedGoal]);
 	const workload = useMemo(() => memoryMode === 'deadline' ? estimateDeadlineWorkload(questions, {
 		now: planningNow, end: deadlineDate(deadline), targetRetention, selectedTags,
 	}) : null, [questions, memoryMode, planningNow, deadline, targetRetention, selectedTags]);
+	const remainingDays = Math.max(1, Math.ceil((deadlineDate(deadline) - planningNow) / 86400000));
+	const dailyGoal = storedGoal || (deadlinePlan ? createDailyGoal({ dailyLimit,
+		answersToday, newToday, remainingDays, workload, plan: deadlinePlan }) : null);
+	const dailyGoalReached = memoryMode === 'deadline' && dailyGoal && answersToday >= dailyGoal.answers;
+	const dailyCheckpoint = dailyGoalReached && !additionalLearning && deadlinePlan?.count > 0 && deadlinePlan?.status !== 'expired';
+	useEffect(() => { setAdditionalLearning(false); }, [ledgerKey, goalConfig]);
+	useEffect(() => {
+		if (!quizStarted || memoryMode !== 'deadline' || storedGoal || !dailyGoal || deadlinePlan?.status === 'expired') return;
+		setDeadlineSettings(previous => ({ ...previous, ledger: { ...previous.ledger,
+			[ledgerKey]: { ...previous.ledger?.[ledgerKey], answers: answersToday, newCount: newToday,
+				goal: { ...dailyGoal, config: goalConfig } },
+		} }));
+	}, [quizStarted, memoryMode, storedGoal, dailyGoal, deadlinePlan?.status, ledgerKey, goalConfig, answersToday, newToday]);
 	useEffect(() => {
 		if (!quizStarted && memoryMode !== 'deadline') return;
 		const timer = setInterval(() => setPlanningNow(new Date()), 10000);
@@ -92,18 +110,19 @@ const Question = ({ questions, setQuestions }) => {
 			setNextQuestionIndex();
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [questions, planningNow]);
+	}, [questions, planningNow, additionalLearning]);
 
-	const selectNextQuestionIndex = () => {
+	const selectNextQuestionIndex = (continueAdditional = false) => {
 		if (memoryMode === 'deadline') {
+			if (dailyCheckpoint && !continueAdditional) return null;
 			const candidates = deadlinePlan?.candidates || [];
 			return candidates.length ? candidates[Math.floor(Math.random() * candidates.length)] : null;
 		}
 		return selectQuestionIndex(questions, queueOptions) ?? selectQuestionIndex(questions, { ...queueOptions, blockedIndexes: timeBlockedIndexes });
 	}
 
-	const setNextQuestionIndex = () => {
-		const nextIndex = selectNextQuestionIndex();
+	const setNextQuestionIndex = (continueAdditional = false) => {
+		const nextIndex = selectNextQuestionIndex(continueAdditional);
 		setCurrentQuestionIndex(nextIndex);
 		setIsAnswered(false);
 		setIsCorrect(false);
@@ -138,7 +157,7 @@ const Question = ({ questions, setQuestions }) => {
 				const isNew = questions[currentQuestionIndex].card.reps === 0;
 				setDeadlineSettings(previous => {
 					const record = previous.ledger?.[ledgerKey] || { answers: 0, newCount: 0 };
-					return { ...previous, ledger: { ...previous.ledger, [ledgerKey]: {
+					return { ...previous, ledger: { ...previous.ledger, [ledgerKey]: { ...record,
 						answers: record.answers + 1, newCount: record.newCount + (isNew ? 1 : 0),
 					} } };
 				});
@@ -245,6 +264,16 @@ const Question = ({ questions, setQuestions }) => {
 			)}
 			{deadlinePlan && (
 				<div className="container mt-3" aria-live="polite">
+					{deadlinePlan.status === 'target_met' ? <p>全体目標に到達したため、今日の追加回答は不要です（推定）。</p> : <>
+					<h5>今日の目標 {dailyGoal.answers} 回答</h5>
+					<p>完了 {today.answers} 回答・あと {Math.max(0, dailyGoal.answers - today.answers)} 回答</p>
+					<progress aria-label="今日の学習進捗" style={{ width: '100%' }}
+						max={Math.max(1, dailyGoal.answers)} value={Math.min(today.answers, dailyGoal.answers)} />
+					</>}
+					{!dailyGoal.estimated && <p role="status">必要回答数の試算ができないため、今日の目標は暫定です。</p>}
+					{deadlinePlan.cannotRetryBeforeDeadline && <p role="status" className="text-danger">期限前に再学習できない問題があります。</p>}
+					<details className="mt-2">
+					<summary>期限までの全体進捗</summary>
 					<p>目標日 {deadline} · 目標記憶率以上（推定） {deadlinePlan.ready} / {deadlinePlan.total} 問</p>
 					<p>今後復習しない場合の目標日の予測記憶率 {Math.round(deadlinePlan.predictedRetention * 100)}%</p>
 					<p>未達 {deadlinePlan.count} 問 · 未学習 {deadlinePlan.unseen} 問 · 今日の回答 {today.answers} 回（目安 {dailyLimit} 回）</p>
@@ -261,21 +290,29 @@ const Question = ({ questions, setQuestions }) => {
 					{deadlinePlan.exceededDailyGoal && <p role="status">回答数の目安に達しましたが、未達の問題があるため学習を続けられます。</p>}
 					{deadlinePlan.overloaded && <p role="status" className="text-danger">必要回答数の下限が1日の目安を超えています。追加の学習が必要です。</p>}
 					{deadlinePlan.cannotRetryBeforeDeadline && <p role="status" className="text-danger">期限前に再学習できない問題が残っています。期限内の目標達成を見込めません。</p>}
+					</details>
 				</div>
 			)}
 			{quizStarted && currentQuestionIndex === null && (
 				<div className="text-center mt-5">
-					<h4>{memoryMode === 'deadline' ? deadlineHeading : waitingUntil ? '復習待ちです' : '今回の学習を終えました！'}</h4>
+					<h4>{dailyCheckpoint ? '今日の目標を達成しました' : memoryMode === 'deadline' ? deadlineHeading : waitingUntil ? '復習待ちです' : '今回の学習を終えました！'}</h4>
+					{dailyCheckpoint && <>
+						<p>今日の完了 {today.answers} 回答</p>
+						<button className="btn btn-primary" onClick={() => {
+							setAdditionalLearning(true);
+							setNextQuestionIndex(true);
+						}}>追加学習する</button>
+					</>}
 					{memoryMode === 'deadline' && deadlinePlan?.status === 'target_met' && <p>FSRSの推定値です。期限当日の全問正答を保証するものではありません。</p>}
-					{memoryMode === 'deadline' && deadlinePlan?.status !== 'target_met' && <p>未達の問題が {deadlinePlan?.count || 0} 問残っています。</p>}
+					{memoryMode === 'deadline' && deadlinePlan?.status === 'expired' && <p>未達の問題が {deadlinePlan?.count || 0} 問残っています。</p>}
 					{waitingUntil && deadlinePlan?.status !== 'expired' && <p>次の復習 {waitingUntil.toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>}
 				</div>
 			)}
 			{quizStarted && currentQuestionIndex !== null && (
 				<div className="container mt-4">
 					<div className="card p-4 shadow-sm">
-						{memoryMode !== 'infinite' && (<h5 className='text-end bm-4'>残り {remainingCount} 問</h5>)}
-						<h5 className="text-center mb-4">問題 {currentQuestionIndex + 1} / {questions.length}</h5>
+						{!['infinite', 'deadline'].includes(memoryMode) && (<h5 className='text-end bm-4'>残り {remainingCount} 問</h5>)}
+						<h5 className="text-center mb-4">{memoryMode === 'deadline' ? '問題' : `問題 ${currentQuestionIndex + 1} / ${questions.length}`}</h5>
 						<Qtype
 							question={currentQuestion}
 							optionOrder={optionOrder}

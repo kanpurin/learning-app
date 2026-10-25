@@ -21,6 +21,7 @@ export function getDeadlinePlan(questions, {
   deadline, targetRetention = 0.9, dailyLimit = 30, selectedTags = [],
   now = new Date(), today = { answers: 0, newCount: 0 },
   blockedIndexes = [],
+  newQuestionGoal = Infinity,
 }) {
   const end = deadlineDate(deadline);
   if (!Number.isFinite(end.getTime())) return null;
@@ -49,7 +50,9 @@ export function getDeadlinePlan(questions, {
     .sort((a, b) => a.retention - b.retention || a.index - b.index);
   const expired = end < now;
   const prioritizeNew = learning.length && newItems.length && today.answers % 2 === 1;
-  const candidates = expired ? [] : prioritizeNew ? newItems : learning.length ? learning : newItems.length ? newItems : reviews.slice(0, 1);
+  const prioritizeReview = reviews.length && today.newCount >= newQuestionGoal;
+  const candidates = expired ? [] : prioritizeNew ? newItems : learning.length ? learning
+    : prioritizeReview ? reviews.slice(0, 1) : newItems.length ? newItems : reviews.slice(0, 1);
   const nextAt = pending.filter(item => item.availableAt > now.getTime())
     .reduce((earliest, item) => Math.min(earliest, item.availableAt), Infinity);
   const remainingDays = Math.max(1, Math.ceil((end - now) / DAY));

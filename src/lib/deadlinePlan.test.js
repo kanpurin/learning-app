@@ -42,6 +42,12 @@ test('a large relearning backlog cannot indefinitely starve unseen questions', (
   }).candidates).toEqual([0]);
 });
 
+test('normal reviews receive slots after the planned daily introductions are answered', () => {
+  expect(getDeadlinePlan([fresh(), learned('2026-10-09')], {
+    ...options, newQuestionGoal: 2, today: { answers: 4, newCount: 2 },
+  }).candidates).toEqual([1]);
+});
+
 test('weak cards are not deferred just because the FSRS due date is after the deadline', () => {
   const item = learned('2026-10-20');
   const plan = getDeadlinePlan([item], options);

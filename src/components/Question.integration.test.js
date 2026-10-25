@@ -49,6 +49,53 @@ function setDeadlineForToday() {
   fireEvent.change(screen.getByLabelText('目標日'), { target: { value } });
 }
 
+test('daily progress is separate from total pending items and extra learning is opt-in', () => {
+  jest.useFakeTimers('modern');
+  jest.setSystemTime(new Date('2026-10-25T12:00:00'));
+  let view;
+  try {
+    const initialQuestions = Array.from({ length: 2 }, (_, i) => ({
+      type: 'mcq', problem: `Daily ${i}`, options: ['Right', 'Wrong'], answer: [1],
+      explanation: 'Explanation', tags: [], card: createEmptyCard(), random: false,
+    }));
+    const scope = JSON.stringify([[], initialQuestions.map(q => [q.problem, q.tags])]);
+    const key = JSON.stringify([scope, '2026-10-25']);
+    localStorage.setItem('learning-app-deadline-plan', JSON.stringify({
+      deadline: '2026-10-26', dailyLimit: 1, targetRetention: 0.9,
+      ledger: { [key]: { answers: 0, newCount: 0, goal: { answers: 1, newQuestions: 1,
+        estimated: true, config: JSON.stringify(['2026-10-26', 0.9, 1]) } } },
+    }));
+    view = render(<Quiz initialQuestions={initialQuestions} />);
+    userEvent.click(screen.getByRole('button', { name: '期限付き' }));
+    userEvent.click(screen.getByRole('button', { name: 'クイズを開始' }));
+    expect(screen.getByText('完了 0 回答・あと 1 回答')).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: '残り 2 問' })).not.toBeInTheDocument();
+    expect(screen.getByText('期限までの全体進捗').closest('details')).not.toHaveAttribute('open');
+    userEvent.click(screen.getByRole('radio', { name: 'Right' }));
+    userEvent.click(screen.getByRole('button', { name: '回答する' }));
+    userEvent.click(screen.getByRole('button', { name: '普通' }));
+    expect(screen.getByRole('heading', { name: '今日の目標 1 回答' })).toBeInTheDocument();
+    userEvent.click(screen.getByRole('button', { name: '次の問題' }));
+    expect(screen.getByText('今日の目標を達成しました')).toBeInTheDocument();
+    act(() => jest.advanceTimersByTime(10 * 60000));
+    expect(screen.queryByRole('radio')).not.toBeInTheDocument();
+    userEvent.click(screen.getByRole('button', { name: '追加学習する' }));
+    expect(screen.getByRole('radio', { name: 'Right' })).toBeEnabled();
+    view.unmount();
+    view = render(<Quiz initialQuestions={initialQuestions} />);
+    userEvent.click(screen.getByRole('button', { name: '期限付き' }));
+    userEvent.click(screen.getByRole('button', { name: 'クイズを開始' }));
+    expect(screen.getByText('今日の目標を達成しました')).toBeInTheDocument();
+    jest.setSystemTime(new Date('2026-10-26T12:00:00'));
+    act(() => jest.advanceTimersByTime(10000));
+    expect(screen.getByText(/完了 0 回答・あと/)).toBeInTheDocument();
+    expect(screen.queryByText('今日の目標を達成しました')).not.toBeInTheDocument();
+  } finally {
+    view?.unmount();
+    jest.useRealTimers();
+  }
+});
+
 test('deadline mode continues beyond the daily goal with real answer controls', () => {
   const initialQuestions = Array.from({ length: 2 }, (_, i) => ({
     type: 'mcq', problem: `Pending ${i}`, options: ['Right', 'Wrong'], answer: [1],
