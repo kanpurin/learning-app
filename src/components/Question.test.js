@@ -27,24 +27,27 @@ function Quiz() {
 
 beforeEach(() => localStorage.clear());
 
-test('deadline mode requires a date and persists the daily answer budget across remounts', () => {
+test('deadline mode persists answer counts but never treats the daily goal as a stop', () => {
   const view = render(<Quiz />);
   userEvent.click(screen.getByRole('button', { name: '期限付き' }));
   expect(screen.getByRole('button', { name: 'クイズを開始' })).toBeDisabled();
   const date = new Date();
   const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   fireEvent.change(screen.getByLabelText('目標日'), { target: { value } });
-  fireEvent.change(screen.getByLabelText('1日の回答数の上限'), { target: { value: '1' } });
+  fireEvent.change(screen.getByLabelText('1日の回答数の目安'), { target: { value: '1' } });
   userEvent.click(screen.getByRole('button', { name: 'クイズを開始' }));
   userEvent.click(screen.getByRole('button', { name: 'Rate' }));
   userEvent.click(screen.getByRole('button', { name: 'Next' }));
-  expect(screen.getByText('今回の学習を終えました！')).toBeInTheDocument();
+  expect(screen.queryByText('今回の学習を終えました！')).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Rate' })).toBeInTheDocument();
+  expect(screen.getByText(/回答数の目安に達しましたが/)).toBeInTheDocument();
   view.unmount();
   render(<Quiz />);
   userEvent.click(screen.getByRole('button', { name: '期限付き' }));
   expect(screen.getByLabelText('目標日')).toHaveValue(value);
   userEvent.click(screen.getByRole('button', { name: 'クイズを開始' }));
-  expect(screen.getByText('今回の学習を終えました！')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Rate' })).toBeInTheDocument();
+  expect(screen.getByText(/今日の回答 1 回/)).toBeInTheDocument();
 });
 
 test('a session ends after its configured new question budget is used', () => {

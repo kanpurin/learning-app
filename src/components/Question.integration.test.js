@@ -43,6 +43,59 @@ test('deadline mode accepts a card loaded with Firestore timestamp dates', () =>
 
 beforeEach(() => localStorage.clear());
 
+function setDeadlineForToday() {
+  const date = new Date();
+  const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  fireEvent.change(screen.getByLabelText('目標日'), { target: { value } });
+}
+
+test('deadline mode continues beyond the daily goal with real answer controls', () => {
+  const initialQuestions = Array.from({ length: 2 }, (_, i) => ({
+    type: 'mcq', problem: `Pending ${i}`, options: ['Right', 'Wrong'], answer: [1],
+    explanation: 'Explanation', tags: [], card: createEmptyCard(), random: false,
+  }));
+  render(<Quiz initialQuestions={initialQuestions} />);
+  userEvent.click(screen.getByRole('button', { name: '期限付き' }));
+  setDeadlineForToday();
+  fireEvent.change(screen.getByLabelText('1日の回答数の目安'), { target: { value: '1' } });
+  userEvent.click(screen.getByRole('button', { name: 'クイズを開始' }));
+  userEvent.click(screen.getByRole('radio', { name: 'Right' }));
+  userEvent.click(screen.getByRole('button', { name: '回答する' }));
+  userEvent.click(screen.getByRole('button', { name: '普通' }));
+  userEvent.click(screen.getByRole('button', { name: '次の問題' }));
+  expect(screen.getByRole('radio', { name: 'Right' })).toBeEnabled();
+  expect(screen.getByText(/目安に達しましたが/)).toBeInTheDocument();
+  expect(screen.getByLabelText('必要回答数の試算')).toBeInTheDocument();
+  expect(screen.getByText(/今後すべて「普通」で正答：残り約/)).toBeInTheDocument();
+  expect(screen.queryByText('今回の学習を終えました！')).not.toBeInTheDocument();
+});
+
+test('deadline target message is explicitly a forecast and requires all cards ready', () => {
+  const card = { ...createEmptyCard(), reps: 3, state: 2, stability: 10000, difficulty: 5,
+    last_review: new Date(Date.now() - 86400000) };
+  render(<Quiz initialCard={card} />);
+  userEvent.click(screen.getByRole('button', { name: '期限付き' }));
+  setDeadlineForToday();
+  userEvent.click(screen.getByRole('button', { name: 'クイズを開始' }));
+  expect(screen.getByText('全問が目標記憶率以上です（推定）')).toBeInTheDocument();
+  expect(screen.getByText(/期限当日の全問正答を保証/)).toBeInTheDocument();
+});
+
+test('an active deadline session explicitly reports unmet cards at expiry', () => {
+  jest.useFakeTimers('modern');
+  try {
+    render(<Quiz />);
+    userEvent.click(screen.getByRole('button', { name: '期限付き' }));
+    setDeadlineForToday();
+    userEvent.click(screen.getByRole('button', { name: 'クイズを開始' }));
+    jest.setSystemTime(new Date(Date.now() + 86400000));
+    act(() => jest.advanceTimersByTime(10000));
+    expect(screen.getByText('目標日を過ぎました')).toBeInTheDocument();
+    expect(screen.getByText('未達の問題が 1 問残っています。')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '回答する' })).not.toBeInTheDocument();
+  } finally { jest.useRealTimers(); }
+});
+
 test.each(['Right', 'Wrong'])('deadline mode handles a real %s answer', answer => {
   render(<Quiz />);
   userEvent.click(screen.getByRole('button', { name: '期限付き' }));

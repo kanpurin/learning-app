@@ -7,7 +7,8 @@ import { fsrs, generatorParameters, Rating, State } from 'ts-fsrs';
 import TagSelector from './TagSelector';
 import { QUESTION_TYPES } from '../constants/questionTypes';
 import { DEFAULT_NEW_QUESTION_LIMIT, getQuestionQueue, selectQuestionIndex } from '../lib/questionRecommendation';
-import { getDeadlinePlan, loadDeadlineSettings, localDate, saveDeadlineSettings } from '../lib/deadlinePlan';
+import { deadlineDate, getDeadlinePlan, loadDeadlineSettings, localDate, saveDeadlineSettings } from '../lib/deadlinePlan';
+import { estimateDeadlineWorkload } from '../lib/deadlineWorkload';
 import { normalizeFsrsCard } from '../lib/fsrsCard';
 import { blockedRetries, delayRetry, RETRY_WAIT_MS, RETRY_OTHER_ANSWERS } from '../lib/retrySpacing';
 
@@ -47,6 +48,9 @@ const Question = ({ questions, setQuestions }) => {
 		return plan?.candidates.length ? plan : getDeadlinePlan(questions, { ...options, blockedIndexes: timeBlockedIndexes });
 	}, [questions, memoryMode, deadline, dailyLimit, targetRetention, selectedTags,
 		planningNow, answersToday, newToday, startedOn, blockedIndexes, timeBlockedIndexes]);
+	const workload = useMemo(() => memoryMode === 'deadline' ? estimateDeadlineWorkload(questions, {
+		now: planningNow, end: deadlineDate(deadline), targetRetention, selectedTags,
+	}) : null, [questions, memoryMode, planningNow, deadline, targetRetention, selectedTags]);
 	useEffect(() => {
 		if (!quizStarted && memoryMode !== 'deadline') return;
 		const timer = setInterval(() => setPlanningNow(new Date()), 10000);
@@ -69,8 +73,19 @@ const Question = ({ questions, setQuestions }) => {
 		}
 		return [];
 	});
-	const waitingUntil = waitingDates.length && (memoryMode !== 'deadline' || (deadlinePlan && today.answers < dailyLimit))
-		? new Date(Math.min(...waitingDates)) : null;
+	const waitingUntil = memoryMode === 'deadline' ? deadlinePlan?.nextReviewAt
+		: waitingDates.length ? new Date(Math.min(...waitingDates)) : null;
+	const deadlineHeading = deadlinePlan?.status === 'target_met' ? '全問が目標記憶率以上です（推定）'
+		: deadlinePlan?.status === 'expired' ? '目標日を過ぎました'
+		: deadlinePlan?.status === 'empty' ? '対象の問題がありません'
+		: '復習待ちです';
+	useEffect(() => {
+		if (quizStarted && memoryMode === 'deadline' && deadlinePlan?.status === 'expired') {
+			setCurrentQuestionIndex(null);
+			setIsAnswered(false);
+			setSelectedRating(null);
+		}
+	}, [quizStarted, memoryMode, deadlinePlan?.status]);
 
 	useEffect(() => {
 		if (currentQuestionIndex == null && selectNextQuestionIndex() !== null) {
@@ -200,7 +215,7 @@ const Question = ({ questions, setQuestions }) => {
 								<label htmlFor="learning-deadline" className="form-label">目標日</label>
 								<input id="learning-deadline" className="form-control mb-3" type="date" min={day} value={deadline}
 									onChange={event => updateDeadline({ deadline: event.target.value, startedOn: day })} />
-								<label htmlFor="daily-limit" className="form-label">1日の回答数の上限</label>
+								<label htmlFor="daily-limit" className="form-label">1日の回答数の目安</label>
 								<input id="daily-limit" className="form-control mb-3" type="number" min="1" max="1000" value={dailyLimit}
 									onChange={event => updateDeadline({ dailyLimit: Math.min(1000, Math.max(1, Math.floor(Number(event.target.value) || 1))) })} />
 								<label htmlFor="target-retention" className="form-label">目標記憶率</label>
@@ -221,7 +236,7 @@ const Question = ({ questions, setQuestions }) => {
 						<button
 							className="btn btn-dark"
 							onClick={startQuiz}
-							disabled={!memoryMode || (memoryMode === 'deadline' && !deadlinePlan)}
+							disabled={!memoryMode || (memoryMode === 'deadline' && (!deadlinePlan || deadlinePlan.status === 'expired'))}
 						>
 							クイズを開始
 						</button>
@@ -230,18 +245,30 @@ const Question = ({ questions, setQuestions }) => {
 			)}
 			{deadlinePlan && (
 				<div className="container mt-3" aria-live="polite">
-					<p>目標日 {deadline} · 目標達成見込み {deadlinePlan.ready} / {deadlinePlan.total} 問</p>
-					<p>目標日の推定記憶率 {Math.round(deadlinePlan.predictedRetention * 100)}% · 未学習 {deadlinePlan.unseen} 問</p>
-					<p>今日の新規目標 {deadlinePlan.newGoal} 問 · 回答済み {today.answers} / {dailyLimit} 回</p>
-					{deadlinePlan.nextReviewDate && <p>次の復習予定 {deadlinePlan.nextReviewDate}</p>}
-					{deadlinePlan.unplannedReviews > 0 && <p role="status" className="text-danger">復習枠に収まらない問題 {deadlinePlan.unplannedReviews} 問</p>}
-					{deadlinePlan.overloaded && <p role="status" className="text-danger">新規問題だけで1日の上限を超えています。回答数の上限または目標日を見直してください。</p>}
+					<p>目標日 {deadline} · 目標記憶率以上（推定） {deadlinePlan.ready} / {deadlinePlan.total} 問</p>
+					<p>今後復習しない場合の目標日の予測記憶率 {Math.round(deadlinePlan.predictedRetention * 100)}%</p>
+					<p>未達 {deadlinePlan.count} 問 · 未学習 {deadlinePlan.unseen} 問 · 今日の回答 {today.answers} 回（目安 {dailyLimit} 回）</p>
+					<p>必要回答数の下限：残り {deadlinePlan.minimumAdditionalAnswers} 回・1日あたり {deadlinePlan.minimumDailyAnswers} 回（誤答・追加復習分を除く）</p>
+					{workload && <div aria-label="必要回答数の試算">
+						{workload.good.remainingAnswers !== null
+							? <p>今後すべて「普通」で正答：残り約 {workload.good.remainingAnswers} 回・1日平均 {workload.good.answersPerDay} 回</p>
+							: <p role="status" className="text-danger">正答が続く想定でも、期限内の到達を試算できない問題が {workload.good.unresolved + workload.good.invalid} 問あります。</p>}
+						{workload.oneFailure.remainingAnswers !== null
+							? <p>未達の各問題で最初に1回誤答し、その後「普通」で正答：残り約 {workload.oneFailure.remainingAnswers} 回・1日平均 {workload.oneFailure.answersPerDay} 回</p>
+							: <p>各問題で1回誤答する想定では、期限内の到達を試算できない問題が {workload.oneFailure.unresolved + workload.oneFailure.invalid} 問あります。</p>}
+						{workload.good.answersPerDay > dailyLimit && <p role="status" className="text-danger">正答が続く試算でも、1日平均の必要回答数が設定した目安を超えています。</p>}
+					</div>}
+					{deadlinePlan.exceededDailyGoal && <p role="status">回答数の目安に達しましたが、未達の問題があるため学習を続けられます。</p>}
+					{deadlinePlan.overloaded && <p role="status" className="text-danger">必要回答数の下限が1日の目安を超えています。追加の学習が必要です。</p>}
+					{deadlinePlan.cannotRetryBeforeDeadline && <p role="status" className="text-danger">期限前に再学習できない問題が残っています。期限内の目標達成を見込めません。</p>}
 				</div>
 			)}
 			{quizStarted && currentQuestionIndex === null && (
 				<div className="text-center mt-5">
-					<h4>{waitingUntil ? '復習待ちです' : '今回の学習を終えました！'}</h4>
-					{waitingUntil && <p>次の復習 {waitingUntil.toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>}
+					<h4>{memoryMode === 'deadline' ? deadlineHeading : waitingUntil ? '復習待ちです' : '今回の学習を終えました！'}</h4>
+					{memoryMode === 'deadline' && deadlinePlan?.status === 'target_met' && <p>FSRSの推定値です。期限当日の全問正答を保証するものではありません。</p>}
+					{memoryMode === 'deadline' && deadlinePlan?.status !== 'target_met' && <p>未達の問題が {deadlinePlan?.count || 0} 問残っています。</p>}
+					{waitingUntil && deadlinePlan?.status !== 'expired' && <p>次の復習 {waitingUntil.toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>}
 				</div>
 			)}
 			{quizStarted && currentQuestionIndex !== null && (

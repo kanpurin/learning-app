@@ -1,6 +1,7 @@
 import { State } from 'ts-fsrs';
-import { allocateReviewPlans, predictRecall } from './deadlineReviewPlanning';
+import { predictRecall } from './deadlineReviewPlanning';
 import { normalizeFsrsCard } from './fsrsCard';
+import { RETRY_WAIT_MS } from './retrySpacing';
 
 const DAY = 86400000;
 
@@ -18,74 +19,53 @@ export function recallAt(card, date) {
 
 export function getDeadlinePlan(questions, {
   deadline, targetRetention = 0.9, dailyLimit = 30, selectedTags = [],
-  startedOn = localDate(), now = new Date(), today = { answers: 0, newCount: 0 },
+  now = new Date(), today = { answers: 0, newCount: 0 },
   blockedIndexes = [],
 }) {
   const end = deadlineDate(deadline);
-  if (!Number.isFinite(end.getTime()) || end < now) return null;
+  if (!Number.isFinite(end.getTime())) return null;
   const matching = questions.map((question, index) => ({ question: {
     ...question, card: normalizeFsrsCard(question.card),
   }, index }))
     .filter(({ question }) => !selectedTags.length || selectedTags.some(tag => question.tags?.includes(tag)));
   const unseen = matching.filter(({ question }) => !question.card.reps);
-  // Reserve the last fifth of the original calendar window for consolidation.
-  const start = new Date(`${startedOn}T00:00:00`);
-  const totalDays = Math.max(1, Math.round((new Date(`${deadline}T00:00:00`) - start) / DAY) + 1);
-  const introductionEnd = new Date(start);
-  introductionEnd.setDate(start.getDate() + Math.max(0, Math.ceil(totalDays * 0.8) - 1));
-  const todayStart = new Date(`${localDate(now)}T00:00:00`);
-  const introductionDays = Math.max(1, Math.round((introductionEnd - todayStart) / DAY) + 1);
-  const newGoal = Math.ceil((unseen.length + today.newCount) / introductionDays);
-  const newRemaining = Math.max(0, newGoal - today.newCount);
-  const budget = Math.max(0, dailyLimit - today.answers);
-  const dayKey = localDate(now);
-  const reviewed = matching.filter(({ question }) => question.card.reps > 0);
-  const due = reviewed.filter(({ question, index }) => !blockedIndexes.includes(index) && new Date(question.card.due) <= now);
-  const learning = due.filter(({ question }) => [State.Learning, State.Relearning].includes(question.card.state));
-  const reviewItems = reviewed.filter(({ question, index }) => !blockedIndexes.includes(index) && question.card.state === State.Review &&
-    localDate(new Date(question.card.last_review || now)) !== localDate(now));
-  const futureLearning = reviewed.filter(({ question }) =>
-    [State.Learning, State.Relearning].includes(question.card.state));
-  const newSlots = Math.min(unseen.length, newRemaining, budget);
-  const futureNewQuota = Math.min(dailyLimit, Math.ceil(Math.max(0, unseen.length - newSlots) /
-    Math.max(1, introductionDays - 1)));
-  const allocation = allocateReviewPlans(reviewItems, {
-    now, end, targetRetention,
-    capacityForDay: date => {
-      const key = localDate(date);
-      const reservedLearning = futureLearning.filter(({ question }) => {
-        const dueDate = new Date(question.card.due);
-        return key === dayKey ? dueDate <= now : localDate(dueDate) === key;
-      }).length;
-      const reservedNew = key === dayKey ? newSlots : key <= localDate(introductionEnd) ? futureNewQuota : 0;
-      return Math.max(0, (key === dayKey ? budget : dailyLimit) - reservedNew - reservedLearning);
-    },
+  const assessed = matching.map(item => {
+    const card = item.question.card;
+    const retention = recallAt(card, end);
+    const ready = card.reps > 0 && card.state === State.Review && retention >= targetRetention;
+    const learning = [State.Learning, State.Relearning].includes(card.state);
+    // Keep spacing, but do not defer weak review cards merely because FSRS due is after the exam.
+    const last = card.last_review?.getTime();
+    const spacedAt = Number.isFinite(last) ? last + RETRY_WAIT_MS : now.getTime();
+    const availableAt = !card.reps ? now.getTime() : learning
+      ? Math.max(spacedAt, card.due.getTime()) : spacedAt;
+    return { ...item, retention, ready, learning, availableAt };
   });
-  const reviews = allocation.today.map(plan => ({ index: plan.index }));
-  // Malformed imported review cards can still be studied at their stored due date.
-  const fallback = due.filter(({ question, index }) => question.card.state === State.Review &&
-    !allocation.scheduled.has(index) && (!(question.card.stability > 0) || !question.card.last_review));
-  reviews.push(...fallback);
-  // Reserve slots for today's introductions so a review backlog cannot starve them.
-  let candidates = [];
-  if (budget > 0) {
-    if (newSlots > 0 && budget <= newSlots) candidates = unseen;
-    else if (learning.length) candidates = learning;
-    else if (reviews.length) candidates = [reviews[0]];
-    else if (newSlots > 0) candidates = unseen;
-  }
-  const estimated = reviewed.map(({ question }) => recallAt(question.card, end));
+  const pending = assessed.filter(item => !item.ready);
+  const eligible = pending.filter(item => item.availableAt <= now.getTime() && !blockedIndexes.includes(item.index));
+  const learning = eligible.filter(item => item.learning);
+  const newItems = eligible.filter(item => !item.question.card.reps);
+  const reviews = eligible.filter(item => item.question.card.reps > 0 && !item.learning)
+    .sort((a, b) => a.retention - b.retention || a.index - b.index);
+  const expired = end < now;
+  const prioritizeNew = learning.length && newItems.length && today.answers % 2 === 1;
+  const candidates = expired ? [] : prioritizeNew ? newItems : learning.length ? learning : newItems.length ? newItems : reviews.slice(0, 1);
+  const nextAt = pending.filter(item => item.availableAt > now.getTime())
+    .reduce((earliest, item) => Math.min(earliest, item.availableAt), Infinity);
+  const remainingDays = Math.max(1, Math.ceil((end - now) / DAY));
+  const minimumDailyAnswers = Math.ceil(pending.length / remainingDays);
   return {
     candidates: candidates.map(item => item.index),
-    count: Math.min(budget, learning.length + reviews.length + newSlots),
-    total: matching.length, unseen: unseen.length, newGoal, newRemaining,
-    ready: estimated.filter(value => value >= targetRetention).length,
-    predictedRetention: matching.length ? estimated.reduce((sum, value) => sum + value, 0) / matching.length : 0,
-    overloaded: newGoal > dailyLimit,
-    plannedReviews: allocation.scheduled.size,
-    unplannedReviews: allocation.unplanned,
-    nextReviewDate: [...allocation.scheduled.values()].map(plan => localDate(plan.dates[0]))
-      .filter(date => date > dayKey).sort()[0] || null,
+    count: pending.length, total: matching.length, unseen: unseen.length,
+    newGoal: unseen.length + today.newCount, newRemaining: unseen.length,
+    ready: matching.length - pending.length,
+    predictedRetention: matching.length ? assessed.reduce((sum, item) => sum + item.retention, 0) / matching.length : 0,
+    minimumAdditionalAnswers: pending.length, minimumDailyAnswers,
+    overloaded: minimumDailyAnswers > dailyLimit,
+    exceededDailyGoal: today.answers >= dailyLimit && pending.length > 0,
+    nextReviewAt: Number.isFinite(nextAt) ? new Date(nextAt) : null,
+    cannotRetryBeforeDeadline: pending.some(item => item.availableAt > end.getTime()),
+    status: !matching.length ? 'empty' : expired ? 'expired' : !pending.length ? 'target_met' : candidates.length ? 'studying' : 'waiting',
   };
 }
 
