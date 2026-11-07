@@ -59,7 +59,7 @@ test('a session ends after its configured new question budget is used', () => {
   userEvent.click(screen.getByRole('button', { name: 'クイズを開始' }));
   expect(screen.getByText('残り 1 問')).toBeInTheDocument();
   userEvent.click(screen.getByRole('button', { name: 'Rate' }));
-  expect(screen.getByText('残り 0 問')).toBeInTheDocument();
+  expect(screen.getByText('残り 1 問')).toBeInTheDocument();
   userEvent.click(screen.getByRole('button', { name: 'Next' }));
   expect(screen.getByText('今回の学習を終えました！')).toBeInTheDocument();
 });

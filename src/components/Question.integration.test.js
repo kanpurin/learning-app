@@ -63,7 +63,7 @@ test('daily progress is separate from total pending items and extra learning is 
     localStorage.setItem('learning-app-deadline-plan', JSON.stringify({
       deadline: '2026-10-26', dailyLimit: 1, targetRetention: 0.9,
       ledger: { [key]: { answers: 0, newCount: 0, goal: { answers: 1, newQuestions: 1,
-        estimated: true, config: JSON.stringify(['2026-10-26', 0.9, 1, 2]) } } },
+        estimated: true, config: JSON.stringify(['2026-10-26', 0.9, 1, 3]) } } },
     }));
     view = render(<Quiz initialQuestions={initialQuestions} />);
     userEvent.click(screen.getByRole('button', { name: '期限付き' }));
@@ -161,7 +161,7 @@ test.each(['Right', 'Wrong'])('deadline mode handles a real %s answer', answer =
   expect(screen.getByText('復習待ちです')).toBeInTheDocument();
 });
 
-test('a due failed question waits for five other answers while alternatives exist', () => {
+test.each([['短期記憶', 'Right'], ['短期記憶', 'Wrong'], ['期限付き', 'Right'], ['期限付き', 'Wrong']])('%s: a due %s question waits for five other answers while alternatives exist', (mode, answer) => {
   jest.useFakeTimers('modern');
   const random = jest.spyOn(Math, 'random').mockReturnValue(0);
   try {
@@ -170,10 +170,16 @@ test('a due failed question waits for five other answers while alternatives exis
       explanation: 'Explanation', tags: [], card: createEmptyCard(), random: false,
     }));
     render(<Quiz initialQuestions={initialQuestions} />);
-    userEvent.click(screen.getByRole('button', { name: '短期記憶' }));
+    userEvent.click(screen.getByRole('button', { name: mode }));
+    if (mode === '期限付き') {
+      const date = new Date();
+      date.setDate(date.getDate() + 14);
+      fireEvent.change(screen.getByLabelText('目標日'), { target: { value: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}` } });
+    }
     userEvent.click(screen.getByRole('button', { name: 'クイズを開始' }));
-    userEvent.click(screen.getByRole('radio', { name: 'Wrong' }));
+    userEvent.click(screen.getByRole('radio', { name: answer }));
     userEvent.click(screen.getByRole('button', { name: '回答する' }));
+    if (answer === 'Right') userEvent.click(screen.getByRole('button', { name: '普通' }));
     userEvent.click(screen.getByRole('button', { name: '次の問題' }));
     act(() => jest.advanceTimersByTime(10 * 60000));
     for (let i = 1; i <= 5; i += 1) {

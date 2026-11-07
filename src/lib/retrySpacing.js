@@ -3,6 +3,14 @@ import { cardDate } from './fsrsCard';
 export const RETRY_WAIT_MS = 10 * 60 * 1000;
 export const RETRY_OTHER_ANSWERS = 5;
 
+export function answerSpacing(memoryMode, correct, answers, now = new Date()) {
+  if (correct && !['short', 'deadline'].includes(memoryMode)) return null;
+  return {
+    notBefore: +now + (correct ? 0 : RETRY_WAIT_MS),
+    afterAnswers: answers + RETRY_OTHER_ANSWERS,
+  };
+}
+
 export function delayRetry(card, now) {
   return { ...card, due: new Date(Math.max(cardDate(card.due).getTime(), now.getTime() + RETRY_WAIT_MS)) };
 }

@@ -22,8 +22,6 @@ const OrderingQuestion = ({ question, optionOrder, isCorrect, setIsCorrect, setN
 
   const handleNextQuestion = () => {
     setSelectedOptions([]);
-    setIsAnswered(false);
-    setIsCorrect(false);
     setNextQuestionIndex();
   };
 

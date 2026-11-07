@@ -1,5 +1,6 @@
 import { State } from 'ts-fsrs';
 import { cardDate } from './fsrsCard';
+import { interleavedCandidates } from './interleavedQueue';
 
 export const DEFAULT_NEW_QUESTION_LIMIT = 10;
 
@@ -7,6 +8,7 @@ export function getQuestionQueue(questions, {
   selectedTags = [], memoryMode, newQuestionsRemaining = DEFAULT_NEW_QUESTION_LIMIT,
   now = new Date(),
   blockedIndexes = [],
+  answeredCount = 0, presented = {},
 } = {}) {
   const matching = questions.map((question, index) => ({ question, index }))
     .filter(({ question, index }) => !blockedIndexes.includes(index) && (selectedTags.length === 0 ||
@@ -19,7 +21,10 @@ export function getQuestionQueue(questions, {
     question.card.state === State.Learning || question.card.state === State.Relearning);
   const unseen = matching.filter(({ question }) => question.card.reps === 0);
   const newCount = Math.min(unseen.length, Math.max(0, newQuestionsRemaining));
-  const candidates = learning.length ? learning : due.length ? due : newCount > 0 ? unseen : [];
+  const reviews = due.filter(item => !learning.includes(item));
+  const candidates = memoryMode === 'short'
+    ? interleavedCandidates([learning, reviews, newCount > 0 ? unseen : []], answeredCount, presented)
+    : learning.length ? learning : due.length ? due : newCount > 0 ? unseen : [];
   return { candidates: candidates.map(item => item.index), count: due.length + newCount };
 }
 

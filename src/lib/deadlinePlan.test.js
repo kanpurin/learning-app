@@ -48,12 +48,34 @@ test('normal reviews receive slots after the planned daily introductions are ans
   }).candidates).toEqual([1]);
 });
 
-test('weak cards are not deferred just because the FSRS due date is after the deadline', () => {
+test('learning, new and normal reviews each receive a turn despite an ongoing learning backlog', () => {
+  const questions = [learned('2026-10-09', State.Relearning), fresh(), learned('2026-10-09')];
+  for (let answers = 0; answers < 12; answers++) {
+    expect(getDeadlinePlan(questions, { ...options, today: { answers, newCount: 0 } }).candidates).toEqual([answers % 3]);
+  }
+});
+
+test('normal reviews rotate by session exposure rather than always selecting the weakest one', () => {
+  const questions = [learned('2026-10-09'), learned('2026-10-09')];
+  questions[0].card.stability = 0.1;
+  expect(getDeadlinePlan(questions, { ...options, presented: { 0: 5, 1: 1 } }).candidates).toEqual([1]);
+});
+
+test('within 24 hours of the deadline, the review slot precedes further new introductions', () => {
+  const questions = [fresh(), learned('2026-10-09')];
+  questions[1].card.stability = 0.5;
+  expect(getDeadlinePlan(questions, { ...options, deadline: '2026-10-10',
+    today: { answers: 1, newCount: 0 } }).candidates).toEqual([1]);
+});
+
+test('weak cards due after the deadline are scheduled with a recovery day reserved', () => {
   const item = learned('2026-10-20');
   const plan = getDeadlinePlan([item], options);
-  expect(plan.candidates).toEqual([0]);
+  expect(plan.candidates).toEqual([]);
   expect(plan.count).toBe(1);
-  expect(plan.status).toBe('studying');
+  expect(plan.status).toBe('waiting');
+  expect(plan.nextReviewAt).toEqual(new Date('2026-10-18T23:59:59'));
+  expect(getDeadlinePlan([item], { ...options, now: plan.nextReviewAt }).candidates).toEqual([0]);
 });
 
 test('deadline-day risks can be reviewed early but not repeatedly on that day', () => {
@@ -61,6 +83,7 @@ test('deadline-day risks can be reviewed early but not repeatedly on that day', 
   item.card.stability = 1;
   const finalDay = { ...options, deadline: '2026-10-10' };
   expect(getDeadlinePlan([item], finalDay).candidates).toEqual([0]);
+  expect(getDeadlinePlan([item], { ...finalDay, now: new Date('2026-10-10T23:59:59') }).candidates).toEqual([0]);
   item.card.last_review = now;
   expect(getDeadlinePlan([item], finalDay).candidates).toEqual([]);
 });
@@ -116,13 +139,13 @@ test('a high retention forecast does not mark a learning card as mastered', () =
   expect(getDeadlinePlan([item], options)).toMatchObject({ status: 'waiting', count: 1, ready: 0 });
 });
 
-test('the planner retains same-day weak reviews and resumes them after spacing', () => {
+test('the planner does not repeatedly review weak normal cards every ten minutes', () => {
   const item = learned('2026-11-01');
   item.card.last_review = now;
   const plan = getDeadlinePlan([item], options);
   expect(plan).toMatchObject({ status: 'waiting', count: 1 });
-  expect(plan.nextReviewAt).toEqual(new Date(+now + 600000));
-  expect(getDeadlinePlan([item], { ...options, now: new Date(+now + 600000) }).candidates).toEqual([0]);
+  expect(plan.nextReviewAt).toEqual(new Date('2026-10-18T23:59:59'));
+  expect(getDeadlinePlan([item], { ...options, now: new Date(+now + 600000) }).candidates).toEqual([]);
 });
 
 test('late failed items remain unmet and cannot be silently counted as complete', () => {

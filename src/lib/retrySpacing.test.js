@@ -1,9 +1,21 @@
 import { createEmptyCard, State } from 'ts-fsrs';
-import { blockedRetries, delayRetry, RETRY_WAIT_MS } from './retrySpacing';
+import { answerSpacing, blockedRetries, delayRetry, RETRY_WAIT_MS } from './retrySpacing';
 import { getQuestionQueue } from './questionRecommendation';
 import { getDeadlinePlan } from './deadlinePlan';
 
 const now = new Date('2026-10-12T12:00:00');
+
+test('correct answers in short and deadline modes also require five other answers', () => {
+  for (const mode of ['short', 'deadline']) {
+    const spacing = answerSpacing(mode, true, 1, now);
+    expect(blockedRetries({ 0: spacing }, 5, now)).toEqual([0]);
+    expect(blockedRetries({ 0: spacing }, 6, now)).toEqual([]);
+    expect(blockedRetries({ 0: spacing }, 1, now, true)).toEqual([]);
+  }
+  expect(answerSpacing('long', true, 1, now)).toBeNull();
+  expect(answerSpacing('infinite', true, 1, now)).toBeNull();
+  expect(answerSpacing('deadline', false, 1, now).notBefore).toBe(+now + RETRY_WAIT_MS);
+});
 
 test('an error is postponed ten minutes without shortening a longer FSRS interval', () => {
   const card = { ...createEmptyCard(now), due: new Date(+now + 60000) };

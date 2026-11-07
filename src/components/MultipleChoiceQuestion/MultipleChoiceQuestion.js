@@ -23,9 +23,6 @@ const MultipleChoiceQuestion = ({ question, optionOrder, isCorrect, setIsCorrect
   // 次の問題に進む処理
   const handleNextQuestion = () => {
     setSelectedIndex(-1);
-    setIsAnswered(false);
-    setIsCorrect(false);
-    setSelectedRating(null);
     setNextQuestionIndex();
   };
 

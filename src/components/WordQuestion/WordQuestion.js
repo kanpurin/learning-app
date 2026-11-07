@@ -13,8 +13,6 @@ const WordQuestion = ({ question, isCorrect, setIsCorrect, setNextQuestionIndex,
 
   const handleNextQuestion = () => {
     setInputWord('');
-    setIsAnswered(false);
-    setIsCorrect(false);
     setNextQuestionIndex();
   };
 

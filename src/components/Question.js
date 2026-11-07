@@ -5,13 +5,14 @@ import OrderingQuestion from './OrderingQuestion/OrderingQuestion';
 import WordQuestion from './WordQuestion/WordQuestion';
 import { fsrs, generatorParameters, Rating, State } from 'ts-fsrs';
 import TagSelector from './TagSelector';
+import RecommendationDiagnostics from './RecommendationDiagnostics';
 import { QUESTION_TYPES } from '../constants/questionTypes';
 import { DEFAULT_NEW_QUESTION_LIMIT, getQuestionQueue, selectQuestionIndex } from '../lib/questionRecommendation';
 import { deadlineDate, getDeadlinePlan, loadDeadlineSettings, localDate, saveDeadlineSettings } from '../lib/deadlinePlan';
 import { estimateDeadlineWorkload } from '../lib/deadlineWorkload';
 import { createDailyGoal, DAILY_GOAL_VERSION } from '../lib/dailyGoal';
 import { normalizeFsrsCard } from '../lib/fsrsCard';
-import { blockedRetries, delayRetry, RETRY_WAIT_MS, RETRY_OTHER_ANSWERS } from '../lib/retrySpacing';
+import { answerSpacing, blockedRetries, delayRetry } from '../lib/retrySpacing';
 
 const Question = ({ questions, setQuestions }) => {
 	const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -29,7 +30,10 @@ const Question = ({ questions, setQuestions }) => {
 	const [retries, setRetries] = useState({});
 	const [answeredCount, setAnsweredCount] = useState(0);
 	const [additionalLearning, setAdditionalLearning] = useState(false);
+	const [presented, setPresented] = useState({});
 	const answerCounter = useRef(0);
+	const advanceLock = useRef(false);
+	const [advanceRequested, setAdvanceRequested] = useState(false);
 	const blockedIndexes = useMemo(() => blockedRetries(retries, answeredCount, planningNow), [retries, answeredCount, planningNow]);
 	const timeBlockedIndexes = useMemo(() => blockedRetries(retries, answeredCount, planningNow, true), [retries, answeredCount, planningNow]);
 	const deadline = typeof deadlineSettings.deadline === 'string' ? deadlineSettings.deadline : '';
@@ -48,11 +52,11 @@ const Question = ({ questions, setQuestions }) => {
 		if (memoryMode !== 'deadline') return null;
 		const options = { deadline, dailyLimit, targetRetention, selectedTags, now: planningNow,
 			today: { answers: answersToday, newCount: newToday }, startedOn,
-			newQuestionGoal: storedGoal?.newQuestions ?? Infinity };
+			newQuestionGoal: storedGoal?.newQuestions ?? Infinity, presented };
 		const plan = getDeadlinePlan(questions, { ...options, blockedIndexes });
 		return plan?.candidates.length ? plan : getDeadlinePlan(questions, { ...options, blockedIndexes: timeBlockedIndexes });
 	}, [questions, memoryMode, deadline, dailyLimit, targetRetention, selectedTags,
-		planningNow, answersToday, newToday, startedOn, blockedIndexes, timeBlockedIndexes, storedGoal]);
+		planningNow, answersToday, newToday, startedOn, blockedIndexes, timeBlockedIndexes, storedGoal, presented]);
 	const workload = useMemo(() => memoryMode === 'deadline' ? estimateDeadlineWorkload(questions, {
 		now: planningNow, end: deadlineDate(deadline), targetRetention, selectedTags,
 	}) : null, [questions, memoryMode, planningNow, deadline, targetRetention, selectedTags]);
@@ -79,7 +83,7 @@ const Question = ({ questions, setQuestions }) => {
 
 	const currentQuestion = currentQuestionIndex !== null ? questions[currentQuestionIndex] : null;
 
-	const queueOptions = { memoryMode, selectedTags, now: planningNow, newQuestionsRemaining: newQuestionLimit - newQuestionsIntroduced, blockedIndexes };
+	const queueOptions = { memoryMode, selectedTags, now: planningNow, newQuestionsRemaining: newQuestionLimit - newQuestionsIntroduced, blockedIndexes, answeredCount, presented };
 	const remainingCount = memoryMode === 'deadline' ? deadlinePlan?.count || 0 : getQuestionQueue(questions, queueOptions).count;
 	const waitingDates = questions.flatMap((question, index) => {
 		if (selectedTags.length && !selectedTags.some(tag => question.tags?.includes(tag))) return [];
@@ -124,6 +128,7 @@ const Question = ({ questions, setQuestions }) => {
 	const setNextQuestionIndex = (continueAdditional = false) => {
 		const nextIndex = selectNextQuestionIndex(continueAdditional);
 		setCurrentQuestionIndex(nextIndex);
+		if (nextIndex !== null) setPresented(previous => ({ ...previous, [nextIndex]: (previous[nextIndex] || 0) + 1 }));
 		setIsAnswered(false);
 		setIsCorrect(false);
 		setSelectedRating(null);
@@ -137,52 +142,52 @@ const Question = ({ questions, setQuestions }) => {
 		setNextQuestionIndex();
 	};
 
-	useEffect(() => {
-		if (!isAnswered) return;
-		answerCounter.current += 1;
-		setAnsweredCount(answerCounter.current);
-		if (!isCorrect) {
-			setRetries(previous => ({ ...previous, [currentQuestionIndex]: {
-				notBefore: Date.now() + RETRY_WAIT_MS,
-				afterAnswers: answerCounter.current + RETRY_OTHER_ANSWERS,
-			} }));
+	const confirmAndAdvance = () => {
+		if (advanceLock.current || !isAnswered || currentQuestionIndex === null ||
+			(memoryMode !== 'infinite' && !selectedRating)) return;
+		const reviewedAt = new Date();
+		if (memoryMode === 'deadline' && reviewedAt > deadlineDate(deadline)) {
+			setPlanningNow(reviewedAt);
+			return;
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [isAnswered]);
-
-	// 学習履歴を更新
-	useEffect(() => {
-		if (isAnswered && selectedRating && memoryMode !== 'infinite') {
+		advanceLock.current = true;
+		if (memoryMode !== 'infinite') {
+			const isNew = currentQuestion.card.reps === 0;
+			const f = fsrs(generatorParameters({
+				enable_short_term: memoryMode === 'short' || memoryMode === 'deadline',
+				maximum_interval: 90,
+			}));
+			const result = f.next(normalizeFsrsCard(currentQuestion.card), reviewedAt, selectedRating).card;
+			const card = selectedRating === Rating.Again ? delayRetry(result, reviewedAt) : result;
+			setQuestions(previous => previous.map((question, index) => index === currentQuestionIndex ? { ...question, card } : question));
 			if (memoryMode === 'deadline') {
-				const isNew = questions[currentQuestionIndex].card.reps === 0;
+				const confirmedLedgerKey = JSON.stringify([scope, localDate(reviewedAt)]);
 				setDeadlineSettings(previous => {
-					const record = previous.ledger?.[ledgerKey] || { answers: 0, newCount: 0 };
-					return { ...previous, ledger: { ...previous.ledger, [ledgerKey]: { ...record,
+					const record = previous.ledger?.[confirmedLedgerKey] || { answers: 0, newCount: 0 };
+					return { ...previous, ledger: { ...previous.ledger, [confirmedLedgerKey]: { ...record,
 						answers: record.answers + 1, newCount: record.newCount + (isNew ? 1 : 0),
 					} } };
 				});
 			}
-			if (questions[currentQuestionIndex].card.reps === 0) {
-				setNewQuestionsIntroduced(count => count + 1);
-			}
-			const params = generatorParameters({ 
-				enable_short_term: memoryMode === 'short' || memoryMode === 'deadline',
-				maximum_interval: 30*3
-			});
-			const f = fsrs(params);
-			const reviewedAt = new Date();
-			setQuestions(prevQuestions => {
-				const newQuestions = [...prevQuestions];
-				const item = f.next(normalizeFsrsCard(newQuestions[currentQuestionIndex].card), reviewedAt, selectedRating);
-				newQuestions[currentQuestionIndex] = {
-					...newQuestions[currentQuestionIndex],
-					card: selectedRating === Rating.Again ? delayRetry(item.card, reviewedAt) : item.card
-				}
-				return newQuestions;
-			});
+			if (isNew) setNewQuestionsIntroduced(count => count + 1);
 		}
+		answerCounter.current += 1;
+		setAnsweredCount(answerCounter.current);
+		const spacing = answerSpacing(memoryMode, memoryMode === 'infinite' ? isCorrect : selectedRating !== Rating.Again,
+			answerCounter.current, reviewedAt);
+		if (spacing) setRetries(previous => ({ ...previous, [currentQuestionIndex]: spacing }));
+		setPlanningNow(reviewedAt);
+		setAdvanceRequested(true);
+	};
+
+	// Select only after the confirmed card, spacing and daily ledger have rendered together.
+	useEffect(() => {
+		if (!advanceRequested) return;
+		setNextQuestionIndex();
+		setAdvanceRequested(false);
+		advanceLock.current = false;
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [isAnswered, selectedRating]);
+	}, [advanceRequested]);
 
 	const Qtype = {
 		[QUESTION_TYPES.MULTIPLE_CHOICE]: MultipleChoiceQuestion,
@@ -193,6 +198,9 @@ const Question = ({ questions, setQuestions }) => {
 
   return (
 		<div>
+			{memoryMode && <RecommendationDiagnostics questions={questions} options={queueOptions}
+				plan={deadlinePlan} timeBlockedIndexes={timeBlockedIndexes} checkpoint={dailyCheckpoint}
+				currentIndex={quizStarted ? currentQuestionIndex : null} presented={presented} />}
 			{!quizStarted && (
 				<div className="container mt-4">
 					<div className='card p-4 shadow-sm mb-4'>
@@ -319,7 +327,7 @@ const Question = ({ questions, setQuestions }) => {
 							optionOrder={optionOrder}
 							isCorrect={isCorrect}
 							setIsCorrect={setIsCorrect}
-							setNextQuestionIndex={setNextQuestionIndex}
+							setNextQuestionIndex={confirmAndAdvance}
 							isAnswered={isAnswered}
 							setIsAnswered={setIsAnswered}
 							selectedRating={selectedRating}

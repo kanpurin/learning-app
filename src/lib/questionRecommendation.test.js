@@ -6,10 +6,22 @@ const question = (reps, state = State.Review, due = '2026-10-09T12:00:00Z', tags
   ({ card: { reps, state, due }, tags });
 const options = { now, memoryMode: 'short' };
 
-test('due learning and relearning precede reviews and new questions', () => {
+test('the first slot is learning, followed by normal review and new slots', () => {
   const questions = [question(0), question(2), question(1, State.Learning), question(3, State.Relearning)];
   expect(getQuestionQueue(questions, options)).toEqual({ candidates: [2, 3], count: 4 });
   expect(selectQuestionIndex(questions, options, () => 0.99)).toBe(3);
+  expect(getQuestionQueue(questions, { ...options, answeredCount: 1 }).candidates).toEqual([1]);
+  expect(getQuestionQueue(questions, { ...options, answeredCount: 2 }).candidates).toEqual([0]);
+});
+
+test('less-shown cards receive the next turn within a group', () => {
+  const questions = [question(3, State.Relearning), question(3, State.Relearning)];
+  expect(getQuestionQueue(questions, { ...options, presented: { 0: 8, 1: 1 } }).candidates).toEqual([1]);
+});
+
+test('long mode retains its existing priority and infinite mode stays random', () => {
+  const questions = [question(1, State.Relearning), question(2), question(0)];
+  expect(getQuestionQueue(questions, { ...options, memoryMode: 'long', answeredCount: 2 }).candidates).toEqual([0]);
 });
 
 test('due reviews precede new questions without bringing future learning forward', () => {

@@ -1,7 +1,8 @@
 import { State } from 'ts-fsrs';
 import { predictRecall } from './deadlineReviewPlanning';
 import { normalizeFsrsCard } from './fsrsCard';
-import { RETRY_WAIT_MS } from './retrySpacing';
+import { deadlineReviewAt } from './deadlineSchedule';
+import { interleavedCandidates } from './interleavedQueue';
 
 const DAY = 86400000;
 
@@ -22,6 +23,7 @@ export function getDeadlinePlan(questions, {
   now = new Date(), today = { answers: 0, newCount: 0 },
   blockedIndexes = [],
   newQuestionGoal = Infinity,
+  presented = {},
 }) {
   const end = deadlineDate(deadline);
   if (!Number.isFinite(end.getTime())) return null;
@@ -35,29 +37,25 @@ export function getDeadlinePlan(questions, {
     const retention = recallAt(card, end);
     const ready = card.reps > 0 && card.state === State.Review && retention >= targetRetention;
     const learning = [State.Learning, State.Relearning].includes(card.state);
-    // Keep spacing, but do not defer weak review cards merely because FSRS due is after the exam.
-    const last = card.last_review?.getTime();
-    const spacedAt = Number.isFinite(last) ? last + RETRY_WAIT_MS : now.getTime();
-    const availableAt = !card.reps ? now.getTime() : learning
-      ? Math.max(spacedAt, card.due.getTime()) : spacedAt;
+    const availableAt = !card.reps ? now.getTime() : +deadlineReviewAt(card, end);
     return { ...item, retention, ready, learning, availableAt };
   });
   const pending = assessed.filter(item => !item.ready);
   const eligible = pending.filter(item => item.availableAt <= now.getTime() && !blockedIndexes.includes(item.index));
   const learning = eligible.filter(item => item.learning);
   const newItems = eligible.filter(item => !item.question.card.reps);
-  const reviews = eligible.filter(item => item.question.card.reps > 0 && !item.learning)
-    .sort((a, b) => a.retention - b.retention || a.index - b.index);
+  const reviews = eligible.filter(item => item.question.card.reps > 0 && !item.learning);
   const expired = end < now;
-  const prioritizeNew = learning.length && newItems.length && today.answers % 2 === 1;
-  const prioritizeReview = reviews.length && today.newCount >= newQuestionGoal;
-  const candidates = expired ? [] : prioritizeNew ? newItems : learning.length ? learning
-    : prioritizeReview ? reviews.slice(0, 1) : newItems.length ? newItems : reviews.slice(0, 1);
+  const reviewFirst = today.newCount >= newQuestionGoal || end - now <= DAY;
+  const groups = reviewFirst ? [learning, reviews, newItems] : [learning, newItems, reviews];
+  const candidates = expired ? [] : interleavedCandidates(groups, today.answers, presented);
   const nextAt = pending.filter(item => item.availableAt > now.getTime())
     .reduce((earliest, item) => Math.min(earliest, item.availableAt), Infinity);
   const remainingDays = Math.max(1, Math.ceil((end - now) / DAY));
   const minimumDailyAnswers = Math.ceil(pending.length / remainingDays);
   return {
+    assessed,
+    blockedIndexes,
     candidates: candidates.map(item => item.index),
     count: pending.length, total: matching.length, unseen: unseen.length,
     newGoal: unseen.length + today.newCount, newRemaining: unseen.length,

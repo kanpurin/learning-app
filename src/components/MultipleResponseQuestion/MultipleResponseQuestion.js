@@ -32,9 +32,6 @@ const MultipleResponseQuestion = ({ question, optionOrder, isCorrect, setIsCorre
   // 次の問題に進む処理
   const handleNextQuestion = () => {
     setSelectedIndices([]);
-    setIsAnswered(false);
-    setIsCorrect(false);
-    setSelectedRating(null);
     setNextQuestionIndex();
   };
 

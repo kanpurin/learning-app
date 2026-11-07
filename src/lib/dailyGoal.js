@@ -1,4 +1,4 @@
-export const DAILY_GOAL_VERSION = 2;
+export const DAILY_GOAL_VERSION = 3;
 
 export function createDailyGoal({ dailyLimit, answersToday, newToday, remainingDays, workload, plan }) {
   const days = Math.max(1, remainingDays);

@@ -179,20 +179,10 @@
   .main-content {
     margin-top: 56px;
     padding: 12px;
-    padding-bottom: 92px;
   }
 
   .app-tabs {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 1000;
-    margin: 0;
-    padding: 8px 10px max(8px, env(safe-area-inset-bottom));
-    background: #ffffff;
-    border-top: 1px solid #dee2e6;
-    box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.08);
+    margin: 0 0 1rem;
   }
 
   .app-tabs .nav {

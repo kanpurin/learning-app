@@ -7,28 +7,32 @@ const RatingButton = ({ selectedRating, setSelectedRating }) => {
       <button
         className={`btn w-100 ${selectedRating === Rating.Again ? 'btn-secondary' : 'btn-outline-secondary'}`}
         onClick={() => setSelectedRating(Rating.Again)}
-        disabled={selectedRating !== null}
+        type="button"
+        aria-pressed={selectedRating === Rating.Again}
       >
         もう一回
       </button>
       <button
         className={`btn w-100 ${selectedRating === Rating.Hard ? 'btn-danger' : 'btn-outline-danger'}`}
         onClick={() => setSelectedRating(Rating.Hard)}
-        disabled={selectedRating !== null}
+        type="button"
+        aria-pressed={selectedRating === Rating.Hard}
       >
         難しい
       </button>
       <button
         className={`btn w-100 ${selectedRating === Rating.Good ? 'btn-primary' : 'btn-outline-primary'}`}
         onClick={() => setSelectedRating(Rating.Good)}
-        disabled={selectedRating !== null}
+        type="button"
+        aria-pressed={selectedRating === Rating.Good}
       >
         普通
       </button>
       <button
         className={`btn w-100 ${selectedRating === Rating.Easy ? 'btn-success' : 'btn-outline-success'}`}
         onClick={() => setSelectedRating(Rating.Easy)}
-        disabled={selectedRating !== null}
+        type="button"
+        aria-pressed={selectedRating === Rating.Easy}
       >
         簡単
       </button>

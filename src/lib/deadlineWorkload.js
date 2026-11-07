@@ -1,7 +1,8 @@
 import { fsrs, Rating, State } from 'ts-fsrs';
 import { normalizeFsrsCard } from './fsrsCard';
 import { predictRecall } from './deadlineReviewPlanning';
-import { RETRY_WAIT_MS, delayRetry } from './retrySpacing';
+import { delayRetry } from './retrySpacing';
+import { deadlineReviewAt } from './deadlineSchedule';
 
 const model = fsrs({ enable_short_term: true, maximum_interval: 90 });
 const MAX_REVIEWS_PER_CARD = 100;
@@ -21,14 +22,7 @@ function simulate(questions, { now, end, targetRetention }, firstAttemptFails) {
       let attempts = 0;
       while (!reached(card, end, targetRetention) && attempts < MAX_REVIEWS_PER_CARD) {
         if (card.reps > 0) {
-          const last = card.last_review?.getTime();
-          const earliest = Number.isFinite(last) ? last + RETRY_WAIT_MS : +when;
-          const learning = [State.Learning, State.Relearning].includes(card.state);
-          const nextDay = Number.isFinite(last) ? new Date(last) : new Date(when);
-          nextDay.setDate(nextDay.getDate() + 1);
-          // Spaced normal reviews avoid an endless run of same-day memory updates.
-          const scheduled = learning ? +card.due : Math.min(+card.due, +nextDay);
-          when = new Date(Math.max(+when, earliest, scheduled));
+          when = new Date(Math.max(+when, +deadlineReviewAt(card, end)));
         }
         if (when > end) break;
         const rating = firstAttemptFails && attempts === 0 ? Rating.Again : Rating.Good;
